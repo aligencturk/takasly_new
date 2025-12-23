@@ -31,7 +31,16 @@ class _ProductDetailViewState extends State<ProductDetailView> {
   }
 
   Future<void> _makePhoneCall(String phoneNumber) async {
-    final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
+    final cleanNumber = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+    final Uri launchUri = Uri(scheme: 'tel', path: cleanNumber);
+    if (await canLaunchUrl(launchUri)) {
+      await launchUrl(launchUri);
+    }
+  }
+
+  Future<void> _sendMessage(String phoneNumber) async {
+    final cleanNumber = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+    final Uri launchUri = Uri(scheme: 'sms', path: cleanNumber);
     if (await canLaunchUrl(launchUri)) {
       await launchUrl(launchUri);
     }
@@ -98,76 +107,73 @@ class _ProductDetailViewState extends State<ProductDetailView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text(
-          'İlan Detayı',
-          style: TextStyle(color: Colors.white, fontSize: 18),
-        ),
-        backgroundColor: AppTheme.primary,
-        iconTheme: const IconThemeData(color: Colors.white),
-        centerTitle: true,
-        actions: [
-          IconButton(icon: const Icon(Icons.favorite_border), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.share), onPressed: () {}),
-        ],
-      ),
-      body: Consumer<ProductDetailViewModel>(
-        builder: (context, viewModel, child) {
-          if (viewModel.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (viewModel.errorMessage != null) {
-            return Center(child: Text(viewModel.errorMessage!));
-          }
-
-          final product = viewModel.productDetail;
-          if (product == null) {
-            return const Center(child: Text("Ürün bulunamadı"));
-          }
-
-          return SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildImageGallery(product),
-                const SizedBox(height: 16),
-                _buildTitleSection(product),
-                const Divider(
-                  height: 32,
-                  thickness: 8,
-                  color: Color(0xFFF5F5F5),
-                ),
-                _buildUserInfoCard(product),
-                const Divider(
-                  height: 32,
-                  thickness: 8,
-                  color: Color(0xFFF5F5F5),
-                ),
-                _buildAdDetailsTable(product),
-                const Divider(
-                  height: 32,
-                  thickness: 8,
-                  color: Color(0xFFF5F5F5),
-                ),
-                _buildDescription(product),
-                const Divider(
-                  height: 32,
-                  thickness: 8,
-                  color: Color(0xFFF5F5F5),
-                ),
-                _buildLocationSection(product),
-                const SizedBox(height: 100),
-              ],
+    return Consumer<ProductDetailViewModel>(
+      builder: (context, viewModel, child) {
+        final product = viewModel.productDetail;
+        return Scaffold(
+          backgroundColor: Colors.white,
+          appBar: AppBar(
+            title: const Text(
+              'İlan Detayı',
+              style: TextStyle(color: Colors.white, fontSize: 18),
             ),
-          );
-        },
-      ),
-      bottomNavigationBar: _buildBottomBar(),
+            backgroundColor: AppTheme.primary,
+            iconTheme: const IconThemeData(color: Colors.white),
+            centerTitle: true,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.favorite_border),
+                onPressed: () {},
+              ),
+              IconButton(icon: const Icon(Icons.share), onPressed: () {}),
+            ],
+          ),
+          body: () {
+            if (viewModel.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (viewModel.errorMessage != null) {
+              return Center(child: Text(viewModel.errorMessage!));
+            }
+
+            if (product == null) {
+              return const Center(child: Text("Ürün bulunamadı"));
+            }
+
+            return SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildImageGallery(product),
+                  const SizedBox(height: 16),
+                  _buildTitleSection(product),
+                  const SizedBox(height: 16),
+
+                  _buildUserInfoCard(product),
+                  const SizedBox(height: 16),
+
+                  _buildDescription(product),
+
+                  const SizedBox(height: 56),
+
+                  _buildAdDetailsTable(product),
+
+                  const SizedBox(height: 46),
+
+                  _buildLocationSection(product),
+                  const SizedBox(height: 100),
+                ],
+              ),
+            );
+          }(),
+          bottomNavigationBar: _buildBottomBar(product),
+        );
+      },
     );
   }
+
+  // ... (keeping other methods same, just updating _buildBottomBar signature and logic down below)
 
   Widget _buildImageGallery(ProductDetail product) {
     final images =
@@ -201,7 +207,7 @@ class _ProductDetailViewState extends State<ProductDetailView> {
                   itemBuilder: (context, index) {
                     return Image.network(
                       images[index],
-                      fit: BoxFit.cover,
+                      fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) =>
                           Container(color: Colors.grey[200]),
                     );
@@ -655,7 +661,14 @@ class _ProductDetailViewState extends State<ProductDetailView> {
     );
   }
 
-  Widget _buildBottomBar() {
+  Widget _buildBottomBar(ProductDetail? product) {
+    if (product == null) return const SizedBox.shrink();
+
+    final showCallButton =
+        product.isShowContact == true &&
+        product.userPhone != null &&
+        product.userPhone!.isNotEmpty;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -665,28 +678,36 @@ class _ProductDetailViewState extends State<ProductDetailView> {
       child: SafeArea(
         child: Row(
           children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  // _makePhoneCall('PHONE_NUMBER');
-                },
-                icon: const Icon(Icons.phone),
-                label: const Text("Ara"),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.primary,
-                  side: const BorderSide(color: AppTheme.primary, width: 1.5),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+            if (showCallButton) ...[
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => _makePhoneCall(product.userPhone!),
+                  icon: const Icon(Icons.phone),
+                  label: const Text("Ara"),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.primary,
+                    side: const BorderSide(color: AppTheme.primary, width: 1.5),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
               ),
-            ),
-            const SizedBox(width: 16),
+              const SizedBox(width: 16),
+            ],
             Expanded(
               child: ElevatedButton.icon(
                 onPressed: () {
-                  // Message functionality
+                  if (showCallButton) {
+                    _sendMessage(product.userPhone!);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Kullanıcı mesajlaşmaya kapalı'),
+                      ),
+                    );
+                  }
                 },
                 icon: const Icon(Icons.message),
                 label: const Text("Mesaj Gönder"),
