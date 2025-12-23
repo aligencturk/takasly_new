@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../core/constants/api_constants.dart';
+import '../models/product_detail_model.dart';
 
 import 'package:logger/logger.dart';
 
@@ -130,6 +131,18 @@ class ApiService {
     try {
       final response = await get('service/user/account/$userId/notifications');
       return response;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<ProductDetailModel> getProductDetail(int productId) async {
+    try {
+      final response = await get(
+        '${ApiConstants.productDetail}$productId/productDetail',
+      );
+      // The _handleResponse returns dynamic (Map<String, dynamic>), so we parse it here
+      return ProductDetailModel.fromJson(response);
     } catch (e) {
       rethrow;
     }

@@ -5,6 +5,8 @@ class ApiConstants {
   // Auth Endpoints
   static const String login = 'service/auth/login';
   static const String allProductList = 'service/user/product/allProductList';
+  static const String productDetail =
+      'service/user/product/'; // + {id}/productDetail
 
   // Auth Credentials
   static const String apiUser = 'Tk2BULs2IC4HJN2nlvp9T5ycBoyMJD';

@@ -52,47 +52,64 @@ class ProductViewModel extends ChangeNotifier {
       notifyListeners();
     }
 
-    _currentFilter.page = isRefresh ? 1 : currentPage;
+    int startPage = isRefresh ? 1 : currentPage;
+    _currentFilter.page = startPage;
 
     _logger.i(
-      'Ürünler getiriliyor. Yenileme: $isRefresh, Sayfa: ${_currentFilter.page}',
+      'Ürünler getiriliyor. Yenileme: $isRefresh, Başlangıç Sayfası: ${_currentFilter.page}',
     );
 
     try {
-      final response = await _productService.getAllProducts(_currentFilter);
+      bool shouldContinue = true;
+      while (shouldContinue) {
+        _currentFilter.page = currentPage;
+        final response = await _productService.getAllProducts(_currentFilter);
 
-      if (response.success == true && response.data != null) {
-        final newProducts = response.data!.products ?? [];
+        if (response.success == true && response.data != null) {
+          final newProducts = response.data!.products ?? [];
 
-        if (isRefresh) {
-          products = newProducts;
-        } else {
-          products.addAll(newProducts);
-        }
-
-        // Pagination logic
-        if (newProducts.isEmpty) {
-          isLastPage = true;
-        } else {
-          // Check total pages if available
-          if (response.data!.totalPages != null &&
-              currentPage >= response.data!.totalPages!) {
-            isLastPage = true;
+          if (isRefresh && currentPage == 1) {
+            products = List.from(newProducts);
+            isLoading = false; // Hide initial loader once first page is here
           } else {
-            // Prepare for next page
-            currentPage++;
+            products.addAll(newProducts);
           }
+
+          _logger.i(
+            'Sayfa $currentPage: ${newProducts.length} ürün getirildi. Toplam ürün: ${products.length}',
+          );
+
+          // Pagination logic
+          if (newProducts.isEmpty) {
+            isLastPage = true;
+            shouldContinue = false;
+          } else {
+            // Check total pages if available
+            if (response.data!.totalPages != null &&
+                currentPage >= response.data!.totalPages!) {
+              isLastPage = true;
+              shouldContinue = false;
+            } else {
+              // Prepare for next page
+              currentPage++;
+              // If it's not a refresh (e.g. infinite scroll), we only load ONE page at a time
+              if (!isRefresh) {
+                shouldContinue = false;
+              }
+            }
+          }
+          notifyListeners(); // Notify for each page loaded
+        } else {
+          errorMessage = response.message ?? "Veri alınamadı";
+          _logger.w(
+            'Ürün getirme başarısız (Sayfa $currentPage): $errorMessage',
+          );
+          shouldContinue = false;
         }
-        _logger.i(
-          '${newProducts.length} ürün getirildi. Toplam ürün: ${products.length}',
-        );
-      } else {
-        errorMessage = response.message ?? "Veri alınamadı";
-        _logger.w('Ürün getirme başarısız: $errorMessage');
       }
     } catch (e, stackTrace) {
       if (e is EndOfListException) {
-        _logger.i('Ürün listesinin sonuna ulaşıldı.');
+        _logger.i('Ürün listesinin sonuna ulaşıldı (Status 410).');
         isLastPage = true;
       } else if (e is BusinessException) {
         errorMessage = e.message;
@@ -110,6 +127,11 @@ class ProductViewModel extends ChangeNotifier {
       isLoadMoreRunning = false;
       notifyListeners();
     }
+  }
+
+  void filterByCategory(int? categoryId) {
+    _currentFilter.categoryID = categoryId ?? 0;
+    fetchProducts(isRefresh: true);
   }
 
   void loadNextPage() {
