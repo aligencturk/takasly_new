@@ -170,6 +170,18 @@ class Product {
       isTrade: json['isTrade'],
     );
   }
+  String? get categoryTitle {
+    if (categoryList == null || categoryList!.isEmpty) return null;
+    if (categoryID != null) {
+      try {
+        final category = categoryList!.firstWhere((c) => c.catID == categoryID);
+        return category.catName;
+      } catch (_) {
+        return categoryList!.first.catName;
+      }
+    }
+    return categoryList!.first.catName;
+  }
 }
 
 class Category {

@@ -2,8 +2,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
-import 'views/products/products_view.dart';
+import 'views/home/home_view.dart'; // Import HomeView
 import 'viewmodels/product_viewmodel.dart';
+import 'viewmodels/home_viewmodel.dart'; // Import HomeViewModel
 
 import 'theme/app_theme.dart';
 
@@ -19,12 +20,17 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => ProductViewModel())],
+      providers: [
+        ChangeNotifierProvider(create: (_) => ProductViewModel()),
+        ChangeNotifierProvider(
+          create: (_) => HomeViewModel(),
+        ), // Add HomeViewModel
+      ],
       child: MaterialApp(
         title: 'Takasly',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
-        home: const ProductsView(),
+        home: const HomeView(),
       ),
     );
   }

@@ -107,6 +107,24 @@ class ApiService {
       );
     }
   }
+
+  Future<Map<String, dynamic>> getLogos() async {
+    try {
+      final response = await get('service/general/general/logos');
+      return response;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> getCategories() async {
+    try {
+      final response = await get('service/general/general/categories/0');
+      return response;
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
 
 class BusinessException implements Exception {
