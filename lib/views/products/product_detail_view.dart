@@ -1,6 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../theme/app_theme.dart';
 import '../../viewmodels/product_detail_viewmodel.dart';
 import '../../models/product_detail_model.dart';
@@ -23,6 +28,72 @@ class _ProductDetailViewState extends State<ProductDetailView> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProductDetailViewModel>().getProductDetail(widget.productId);
     });
+  }
+
+  Future<void> _makePhoneCall(String phoneNumber) async {
+    final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
+    if (await canLaunchUrl(launchUri)) {
+      await launchUrl(launchUri);
+    }
+  }
+
+  Future<void> _openMap(double lat, double lng) async {
+    final googleMapsUrl = Uri.parse(
+      "https://www.google.com/maps/search/?api=1&query=$lat,$lng",
+    );
+    final appleMapsUrl = Uri.parse("https://maps.apple.com/?q=$lat,$lng");
+
+    if (Platform.isAndroid) {
+      if (await canLaunchUrl(googleMapsUrl)) {
+        await launchUrl(googleMapsUrl, mode: LaunchMode.externalApplication);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Harita uygulaması açılamadı')),
+        );
+      }
+    } else if (Platform.isIOS) {
+      showModalBottomSheet(
+        context: context,
+        builder: (BuildContext context) {
+          return SafeArea(
+            child: Wrap(
+              children: <Widget>[
+                ListTile(
+                  leading: const Icon(Icons.map),
+                  title: const Text('Apple Maps'),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    if (await canLaunchUrl(appleMapsUrl)) {
+                      await launchUrl(appleMapsUrl);
+                    }
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.map_outlined),
+                  title: const Text('Google Maps'),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    if (await canLaunchUrl(googleMapsUrl)) {
+                      await launchUrl(googleMapsUrl);
+                    }
+                  },
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    } else {
+      if (await canLaunchUrl(googleMapsUrl)) {
+        await launchUrl(googleMapsUrl);
+      }
+    }
+  }
+
+  void _shareLocation(String title, double lat, double lng) {
+    Share.share(
+      'Bu ilana göz at: $title\nKonum: https://www.google.com/maps/search/?api=1&query=$lat,$lng',
+    );
   }
 
   @override
@@ -102,7 +173,12 @@ class _ProductDetailViewState extends State<ProductDetailView> {
     final images =
         product.productGallery != null && product.productGallery!.isNotEmpty
         ? product.productGallery!
-        : (product.productImage != null ? [product.productImage!] : []);
+        : (product.productImage != null &&
+                  product
+                      .productImage!
+                      .isNotEmpty // Added check
+              ? [product.productImage!]
+              : []);
 
     return Stack(
       alignment: Alignment.bottomCenter,
@@ -110,22 +186,27 @@ class _ProductDetailViewState extends State<ProductDetailView> {
         SizedBox(
           height: 300,
           width: double.infinity,
-          child: PageView.builder(
-            itemCount: images.length,
-            onPageChanged: (index) {
-              setState(() {
-                _currentImageIndex = index;
-              });
-            },
-            itemBuilder: (context, index) {
-              return Image.network(
-                images[index],
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) =>
-                    Container(color: Colors.grey[200]),
-              );
-            },
-          ),
+          child: images.isEmpty
+              ? Container(
+                  color: Colors.grey[200],
+                  child: const Icon(Icons.image_not_supported),
+                )
+              : PageView.builder(
+                  itemCount: images.length,
+                  onPageChanged: (index) {
+                    setState(() {
+                      _currentImageIndex = index;
+                    });
+                  },
+                  itemBuilder: (context, index) {
+                    return Image.network(
+                      images[index],
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          Container(color: Colors.grey[200]),
+                    );
+                  },
+                ),
         ),
         if (images.length > 1)
           Positioned(
@@ -228,10 +309,14 @@ class _ProductDetailViewState extends State<ProductDetailView> {
                 CircleAvatar(
                   radius: 20,
                   backgroundColor: Colors.grey[200],
-                  backgroundImage: product.profilePhoto != null
+                  backgroundImage:
+                      (product.profilePhoto != null &&
+                          product.profilePhoto!.isNotEmpty)
                       ? NetworkImage(product.profilePhoto!)
                       : null,
-                  child: product.profilePhoto == null
+                  child:
+                      (product.profilePhoto == null ||
+                          product.profilePhoto!.isEmpty)
                       ? Text(
                           (product.userFullname ?? 'U')[0].toUpperCase(),
                           style: const TextStyle(color: AppTheme.primary),
@@ -311,7 +396,7 @@ class _ProductDetailViewState extends State<ProductDetailView> {
             "Görüntülenme :",
             "Bu ilan ${product.proView?.replaceAll(RegExp(r'[^0-9]'), '') ?? '0'} kere görüntülendi",
             false,
-          ), // Extract count roughly or use full string
+          ),
 
           const SizedBox(height: 8),
           Row(
@@ -427,6 +512,19 @@ class _ProductDetailViewState extends State<ProductDetailView> {
   }
 
   Widget _buildLocationSection(ProductDetail product) {
+    // Default coordinates if parsing fails or null
+    double lat = 39.9334; // Ankara default
+    double lng = 32.8597;
+
+    if (product.productLat != null && product.productLong != null) {
+      try {
+        lat = double.parse(product.productLat!);
+        lng = double.parse(product.productLong!);
+      } catch (e) {
+        // Fallback to default
+      }
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -436,7 +534,7 @@ class _ProductDetailViewState extends State<ProductDetailView> {
             "Konum Bilgileri",
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Row(
             children: [
               const Icon(
@@ -452,31 +550,39 @@ class _ProductDetailViewState extends State<ProductDetailView> {
             ],
           ),
           const SizedBox(height: 12),
-          // Map Placeholder Image
+          // Flutter Map Implementation
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: Container(
+            child: SizedBox(
               height: 180,
               width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                border: Border.all(color: Colors.grey.withOpacity(0.2)),
-              ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Image.asset(
-                    'assets/map_placeholder.png', // Fallback or use a network image if available
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
-                    errorBuilder: (ctx, err, stack) =>
-                        Icon(Icons.map, size: 40, color: Colors.grey[400]),
+              child: FlutterMap(
+                options: MapOptions(
+                  initialCenter: LatLng(lat, lng),
+                  initialZoom: 13.0,
+                  interactionOptions: const InteractionOptions(
+                    flags: InteractiveFlag.none, // Static map
                   ),
-                  const Icon(
-                    Icons.location_on,
-                    size: 40,
-                    color: AppTheme.error,
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.rivorya.takasly',
+                  ),
+                  MarkerLayer(
+                    markers: [
+                      Marker(
+                        point: LatLng(lat, lng),
+                        width: 40,
+                        height: 40,
+                        child: const Icon(
+                          Icons.location_on,
+                          color: Colors.red,
+                          size: 40,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -487,7 +593,7 @@ class _ProductDetailViewState extends State<ProductDetailView> {
             children: [
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: () {},
+                  onPressed: () => _openMap(lat, lng),
                   icon: const Icon(Icons.directions, size: 18),
                   label: const Text("Yol Tarifi Al"),
                   style: ElevatedButton.styleFrom(
@@ -503,7 +609,8 @@ class _ProductDetailViewState extends State<ProductDetailView> {
               const SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: () {},
+                  onPressed: () =>
+                      _shareLocation(product.productTitle ?? 'İlan', lat, lng),
                   icon: const Icon(Icons.share_location, size: 18),
                   label: const Text("Konumu Paylaş"),
                   style: ElevatedButton.styleFrom(
@@ -560,7 +667,9 @@ class _ProductDetailViewState extends State<ProductDetailView> {
           children: [
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: () {},
+                onPressed: () {
+                  // _makePhoneCall('PHONE_NUMBER');
+                },
                 icon: const Icon(Icons.phone),
                 label: const Text("Ara"),
                 style: OutlinedButton.styleFrom(
@@ -576,7 +685,9 @@ class _ProductDetailViewState extends State<ProductDetailView> {
             const SizedBox(width: 16),
             Expanded(
               child: ElevatedButton.icon(
-                onPressed: () {},
+                onPressed: () {
+                  // Message functionality
+                },
                 icon: const Icon(Icons.message),
                 label: const Text("Mesaj Gönder"),
                 style: ElevatedButton.styleFrom(
