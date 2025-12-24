@@ -4,6 +4,7 @@ import '../../theme/app_theme.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../auth/login_view.dart';
 import '../auth/register_view.dart';
+import 'favorites_view.dart';
 
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
@@ -66,7 +67,12 @@ class _ProfileViewState extends State<ProfileView> {
               icon: Icons.favorite_border_rounded,
               title: "Favorilerim",
               onTap: () {
-                // Navigate to Favorites
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const FavoritesView(),
+                  ),
+                );
               },
             ),
             _buildDivider(),

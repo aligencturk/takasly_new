@@ -16,6 +16,10 @@ class ApiConstants {
   static const String allProductList = 'service/user/product/allProductList';
   static const String productDetail =
       'service/user/product/'; // + {id}/productDetail
+  static const String favoriteList =
+      'service/user/product/'; // + {id}/favoriteList
+  static const String addFavorite = 'service/user/product/addFavorite';
+  static const String removeFavorite = 'service/user/product/removeFavorite';
 
   // Auth Credentials
   static const String apiUser = 'Tk2BULs2IC4HJN2nlvp9T5ycBoyMJD';

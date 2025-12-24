@@ -37,4 +37,32 @@ class ProductService {
       rethrow;
     }
   }
+
+  Future<ProductResponseModel> getUserFavorites(int userId) async {
+    try {
+      final url = '${ApiConstants.favoriteList}$userId/favoriteList';
+      final response = await _apiService.get(url);
+      return ProductResponseModel.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> addFavorite(String userToken, int productId) async {
+    try {
+      final payload = {"userToken": userToken, "productID": productId};
+      await _apiService.post(ApiConstants.addFavorite, payload);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> removeFavoriteProduct(String userToken, int productId) async {
+    try {
+      final payload = {"userToken": userToken, "productID": productId};
+      await _apiService.post(ApiConstants.removeFavorite, payload);
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

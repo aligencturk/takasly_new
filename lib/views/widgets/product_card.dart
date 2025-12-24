@@ -5,11 +5,19 @@ import '../../theme/app_theme.dart';
 class ProductCard extends StatelessWidget {
   final Product product;
   final VoidCallback? onTap;
+  final VoidCallback? onFavoritePressed;
 
-  const ProductCard({super.key, required this.product, this.onTap});
+  const ProductCard({
+    super.key,
+    required this.product,
+    this.onTap,
+    this.onFavoritePressed,
+  });
 
   @override
   Widget build(BuildContext context) {
+    bool isFavorite = product.isFavorite ?? false;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -54,16 +62,23 @@ class ProductCard extends StatelessWidget {
                 Positioned(
                   top: 8, // Tighter spacing
                   right: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.favorite_border,
-                      size: 18,
-                      color: Colors.grey[400],
+                  child: GestureDetector(
+                    onTap: onFavoritePressed,
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        isFavorite
+                            ? Icons.favorite
+                            : Icons.favorite_border, // Toggle icon
+                        size: 18,
+                        color: isFavorite
+                            ? AppTheme.error
+                            : Colors.grey[400], // Toggle color
+                      ),
                     ),
                   ),
                 ),

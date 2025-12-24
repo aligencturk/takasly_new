@@ -24,7 +24,9 @@ class ProductViewModel extends ChangeNotifier {
   Future<void> init() async {
     // Try to get location first
     await _fetchLocation();
-    fetchProducts(isRefresh: true);
+    // After location is determined (success or fail), fetch products.
+    // fetchProducts uses _currentFilter which _fetchLocation modifies.
+    await fetchProducts(isRefresh: true);
   }
 
   Future<void> _fetchLocation() async {
@@ -189,6 +191,36 @@ class ProductViewModel extends ChangeNotifier {
       _logger.i('User token updated in ProductViewModel: $token');
       // Refresh products with new token
       fetchProducts(isRefresh: true);
+    }
+  }
+
+  Future<void> toggleFavorite(Product product) async {
+    final token = _currentFilter.userToken;
+    if (token == null || token.isEmpty) {
+      _logger.w('Cannot toggle favorite: User not logged in.');
+      // Optional: Show "Please login" dialog via UI callback or event
+      return;
+    }
+
+    // Capture old state for rollback
+    final oldState = product.isFavorite;
+    // Optimistic update
+    product.isFavorite = !(oldState ?? false);
+    notifyListeners();
+
+    try {
+      if (product.isFavorite == true) {
+        await _productService.addFavorite(token, product.productID!);
+      } else {
+        await _productService.removeFavoriteProduct(token, product.productID!);
+      }
+      _logger.i('Favorite status updated for product ${product.productID}');
+    } catch (e) {
+      // Revert on failure
+      product.isFavorite = oldState;
+      _logger.e('Failed to toggle favorite', error: e);
+      errorMessage = "Favori işlemi başarısız oldu.";
+      notifyListeners();
     }
   }
 }
