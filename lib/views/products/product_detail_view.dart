@@ -107,6 +107,36 @@ class _ProductDetailViewState extends State<ProductDetailView> {
     );
   }
 
+  void _shareProduct(ProductDetail product) {
+    if (product.productTitle == null || product.productCode == null) return;
+
+    String slug = product.productTitle!.toLowerCase();
+    const turkishChars = {
+      'ç': 'c',
+      'ğ': 'g',
+      'ı': 'i',
+      'ö': 'o',
+      'ş': 's',
+      'ü': 'u',
+    };
+
+    turkishChars.forEach((key, value) {
+      slug = slug.replaceAll(key, value);
+    });
+
+    slug = slug.replaceAll(RegExp(r'[^a-z0-9\s-]'), '');
+    slug = slug.trim().replaceAll(RegExp(r'\s+'), '-');
+    slug = slug.replaceAll(RegExp(r'-+'), '-');
+
+    String code = product.productCode!.replaceAll(
+      RegExp(r'tks', caseSensitive: false),
+      '',
+    );
+
+    final url = 'https://www.takasly.tr/ilan/$slug-$code';
+    Share.share(url);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<ProductDetailViewModel>(
@@ -127,7 +157,12 @@ class _ProductDetailViewState extends State<ProductDetailView> {
                 icon: const Icon(Icons.favorite_border),
                 onPressed: () {},
               ),
-              IconButton(icon: const Icon(Icons.share), onPressed: () {}),
+              IconButton(
+                icon: const Icon(Icons.share),
+                onPressed: product == null
+                    ? null
+                    : () => _shareProduct(product),
+              ),
             ],
           ),
           body: () {
