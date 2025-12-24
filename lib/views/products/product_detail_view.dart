@@ -9,6 +9,8 @@ import 'package:share_plus/share_plus.dart';
 import '../../theme/app_theme.dart';
 import '../../viewmodels/product_detail_viewmodel.dart';
 import '../../models/product_detail_model.dart';
+import '../../viewmodels/profile_viewmodel.dart';
+import '../profile/user_profile_view.dart';
 
 class ProductDetailView extends StatefulWidget {
   final int productId;
@@ -173,16 +175,11 @@ class _ProductDetailViewState extends State<ProductDetailView> {
     );
   }
 
-  // ... (keeping other methods same, just updating _buildBottomBar signature and logic down below)
-
   Widget _buildImageGallery(ProductDetail product) {
     final images =
         product.productGallery != null && product.productGallery!.isNotEmpty
         ? product.productGallery!
-        : (product.productImage != null &&
-                  product
-                      .productImage!
-                      .isNotEmpty // Added check
+        : (product.productImage != null && product.productImage!.isNotEmpty
               ? [product.productImage!]
               : []);
 
@@ -310,67 +307,86 @@ class _ProductDetailViewState extends State<ProductDetailView> {
                 ),
               ],
             ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: Colors.grey[200],
-                  backgroundImage:
-                      (product.profilePhoto != null &&
-                          product.profilePhoto!.isNotEmpty)
-                      ? NetworkImage(product.profilePhoto!)
-                      : null,
-                  child:
-                      (product.profilePhoto == null ||
-                          product.profilePhoto!.isEmpty)
-                      ? Text(
-                          (product.userFullname ?? 'U')[0].toUpperCase(),
-                          style: const TextStyle(color: AppTheme.primary),
-                        )
-                      : null,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        product.userFullname ?? '',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
+            child: InkWell(
+              onTap: () {
+                if (product.userID != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ChangeNotifierProvider(
+                        create: (_) => ProfileViewModel(),
+                        child: UserProfileView(userId: product.userID!),
                       ),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          const Icon(Icons.star, color: Colors.amber, size: 14),
-                          const SizedBox(width: 4),
-                          Text(
-                            "${product.averageRating ?? 0.0} (${product.totalReviews ?? 0})",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                            ),
+                    ),
+                  );
+                }
+              },
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.grey[200],
+                    backgroundImage:
+                        (product.profilePhoto != null &&
+                            product.profilePhoto!.isNotEmpty)
+                        ? NetworkImage(product.profilePhoto!)
+                        : null,
+                    child:
+                        (product.profilePhoto == null ||
+                            product.profilePhoto!.isEmpty)
+                        ? Text(
+                            (product.userFullname ?? 'U')[0].toUpperCase(),
+                            style: const TextStyle(color: AppTheme.primary),
+                          )
+                        : null,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          product.userFullname ?? '',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
                           ),
-                        ],
-                      ),
-                    ],
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.star,
+                              color: Colors.amber,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              "${product.averageRating ?? 0.0} (${product.totalReviews ?? 0})",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    shape: BoxShape.circle,
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.chevron_right,
+                      color: Colors.grey,
+                      size: 20,
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.chevron_right,
-                    color: Colors.grey,
-                    size: 20,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -391,7 +407,6 @@ class _ProductDetailViewState extends State<ProductDetailView> {
           const SizedBox(height: 16),
           _buildDetailRow("İlan Sahibi :", product.userFullname ?? '', true),
           _buildDetailRow("Durum :", product.productCondition ?? '', true),
-          // Construct Category Hierarchy string
           _buildDetailRow(
             "Kategori :",
             product.categoryList?.map((e) => e.catName).join(' > ') ?? '',

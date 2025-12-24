@@ -36,7 +36,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildNavItem(0, Icons.home_rounded, 'Ana Sayfa'),
-                _buildNavItem(1, Icons.chat_bubble_rounded, 'Sohbet'),
+                _buildNavItem(1, Icons.messenger, 'Sohbet'),
                 // Placeholder for the center item (it will be positioned absolutely)
                 const SizedBox(width: 70),
                 _buildNavItem(
@@ -70,7 +70,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 25),
+            Icon(icon, color: color, size: 27),
             const SizedBox(height: 4),
             Text(
               label,

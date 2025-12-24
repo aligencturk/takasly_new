@@ -9,6 +9,9 @@ class ApiConstants {
   static const String againSendCode = 'service/auth/code/againSendCode';
   static const String forgotPassword = 'service/auth/forgotPassword';
   static const String updatePass = 'service/auth/forgotPassword/updatePass';
+  static const String getUser = 'service/user/id';
+  static const String getUserProfile =
+      'service/user/account/'; // + {id}/profileDetail
   static const String allProductList = 'service/user/product/allProductList';
   static const String productDetail =
       'service/user/product/'; // + {id}/productDetail

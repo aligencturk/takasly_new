@@ -4,6 +4,7 @@ import '../models/auth/login_model.dart';
 import '../models/auth/register_model.dart';
 import '../models/auth/verification_model.dart';
 import '../models/auth/forgot_password_model.dart';
+import '../models/auth/get_user_model.dart';
 import '../services/auth_service.dart';
 
 enum AuthState { idle, busy, error, success }
@@ -22,6 +23,10 @@ class AuthViewModel extends ChangeNotifier {
 
   LoginResponseModel? _user;
   LoginResponseModel? get user => _user;
+
+  // Full user profile data
+  User? _userProfile;
+  User? get userProfile => _userProfile;
 
   // Temp storage for verification flow
   int? _tempUserId;
@@ -51,6 +56,39 @@ class AuthViewModel extends ChangeNotifier {
       _state = AuthState.error;
       _errorMessage = e.toString();
       _logger.e("Login failed: $e");
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  Future<void> getUser() async {
+    if (_user?.token == null) {
+      // If we don't have a token, we can't fetch the user.
+      // Ideally should handle this case (logout or re-login).
+      _logger.w("getUser called but no user token available.");
+      return;
+    }
+
+    _state = AuthState.busy;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final request = GetUserRequestModel(
+        userToken: _user!.token,
+        platform: "ios", // Placeholder, ideally from device info
+        version: "1.0.0", // Placeholder, ideally from package_info
+      );
+
+      final response = await _authService.getUser(request);
+      _userProfile = response.user;
+
+      _logger.i("User profile fetched: ${_userProfile?.userFullname}");
+      _state = AuthState.success;
+    } catch (e) {
+      _state = AuthState.error;
+      _errorMessage = e.toString();
+      _logger.e("Get User failed: $e");
     } finally {
       notifyListeners();
     }

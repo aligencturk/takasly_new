@@ -76,6 +76,29 @@ class ApiService {
     }
   }
 
+  Future<dynamic> put(String endpoint, Map<String, dynamic> body) async {
+    final url = Uri.parse('${ApiConstants.baseUrl}$endpoint');
+    _logger.i('PUT İsteği: $url\nBaşlıklar: $_headers\nGövde: $body');
+
+    try {
+      final response = await _client.put(
+        url,
+        headers: _headers,
+        body: jsonEncode(body),
+      );
+
+      _logger.d(
+        'Yanıt Durumu: ${response.statusCode}\nGövde: ${response.body}',
+      );
+      return _handleResponse(response);
+    } on http.ClientException catch (e) {
+      _logger.e('Ağ Hatası (Bağlantı Hatası): $e');
+      throw Exception('Ağ hatası: Lütfen bağlantınızı kontrol edin. $e');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   dynamic _handleResponse(http.Response response) {
     if (response.body.isEmpty) {
       _logger.w('Boş Yanıt Gövdesi');

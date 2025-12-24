@@ -3,6 +3,8 @@ import '../models/auth/login_model.dart';
 import '../models/auth/register_model.dart';
 import '../models/auth/verification_model.dart';
 import '../models/auth/forgot_password_model.dart';
+import '../models/auth/get_user_model.dart';
+import '../models/profile/profile_detail_model.dart';
 import 'api_service.dart';
 
 class AuthService {
@@ -96,5 +98,39 @@ class AuthService {
 
   Future<void> updatePassword(UpdatePasswordRequestModel request) async {
     await _apiService.post(ApiConstants.updatePass, request.toJson());
+  }
+
+  Future<GetUserResponseModel> getUser(GetUserRequestModel request) async {
+    final response = await _apiService.put(
+      ApiConstants.getUser,
+      request.toJson(),
+    );
+
+    if (response['data'] != null) {
+      return GetUserResponseModel.fromJson(response['data']);
+    } else {
+      throw Exception("Get User failed: invalid data");
+    }
+  }
+
+  Future<ProfileDetailModel> getProfileDetail(
+    int userId,
+    String? userToken,
+  ) async {
+    // Construct the URL: service/user/account/{userId}/profileDetail
+    String url = "${ApiConstants.getUserProfile}$userId/profileDetail";
+
+    // Add query params manually
+    if (userToken != null) {
+      url += "?userToken=$userToken";
+    }
+
+    final response = await _apiService.get(url);
+
+    if (response['data'] != null) {
+      return ProfileDetailModel.fromJson(response['data']);
+    } else {
+      throw Exception("Get Profile Detail failed: invalid data");
+    }
   }
 }
