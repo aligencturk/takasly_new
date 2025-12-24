@@ -629,7 +629,7 @@ class _ProductDetailViewState extends State<ProductDetailView> {
                   TileLayer(
                     urlTemplate:
                         'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.rivorya.takasly',
+                    userAgentPackageName: 'com.rivorya.takaslyapp',
                   ),
                   MarkerLayer(
                     markers: [

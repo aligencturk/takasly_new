@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../models/product_detail_model.dart';
-import '../services/api_service.dart';
+import '../services/product_service.dart';
 import 'package:logger/logger.dart';
 
 class ProductDetailViewModel extends ChangeNotifier {
-  final ApiService _apiService = ApiService();
+  final ProductService _productService = ProductService();
   final Logger _logger = Logger();
 
   ProductDetail? productDetail;
@@ -17,7 +17,7 @@ class ProductDetailViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _apiService.getProductDetail(
+      final response = await _productService.getProductDetail(
         productId,
         userToken: userToken,
       );

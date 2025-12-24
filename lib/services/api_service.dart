@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../core/constants/api_constants.dart';
-import '../models/product_detail_model.dart';
 
 import 'package:logger/logger.dart';
 
@@ -147,45 +146,25 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> getLogos() async {
-    try {
-      final response = await get('service/general/general/logos');
-      return response;
-    } catch (e) {
-      rethrow;
-    }
-  }
+  Future<dynamic> delete(String endpoint, Map<String, dynamic> body) async {
+    final url = Uri.parse('${ApiConstants.baseUrl}$endpoint');
+    _logger.i('DELETE İsteği: $url\nBaşlıklar: $_headers\nGövde: $body');
 
-  Future<Map<String, dynamic>> getCategories() async {
     try {
-      final response = await get('service/general/general/categories/0');
-      return response;
-    } catch (e) {
-      rethrow;
-    }
-  }
+      final request = http.Request('DELETE', url);
+      request.headers.addAll(_headers);
+      request.body = jsonEncode(body);
 
-  Future<Map<String, dynamic>> getNotifications(int userId) async {
-    try {
-      final response = await get('service/user/account/$userId/notifications');
-      return response;
-    } catch (e) {
-      rethrow;
-    }
-  }
+      final streamedResponse = await _client.send(request);
+      final response = await http.Response.fromStream(streamedResponse);
 
-  Future<ProductDetailModel> getProductDetail(
-    int productId, {
-    String? userToken,
-  }) async {
-    try {
-      String url = '${ApiConstants.productDetail}$productId/productDetail';
-      if (userToken != null && userToken.isNotEmpty) {
-        url += '?userToken=$userToken';
-      }
-      final response = await get(url);
-      // The _handleResponse returns dynamic (Map<String, dynamic>), so we parse it here
-      return ProductDetailModel.fromJson(response);
+      _logger.d(
+        'Yanıt Durumu: ${response.statusCode}\nGövde: ${response.body}',
+      );
+      return _handleResponse(response);
+    } on http.ClientException catch (e) {
+      _logger.e('Ağ Hatası (Bağlantı Hatası): $e');
+      throw Exception('Ağ hatası: Lütfen bağlantınızı kontrol edin. $e');
     } catch (e) {
       rethrow;
     }

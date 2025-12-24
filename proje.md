@@ -84,6 +84,9 @@ if (response.statusCode == 417) {
 }
 ```
 
+- **Status Code 410**: Represents "End of List" during pagination.
+- **Action**: Stop fetching more pages. If data is returned with 410, process it as the final batch.
+
 ### 3. State Management (ViewModel)
 - Extend `ChangeNotifier`.
 - Expose strictly typed state variables.
@@ -143,7 +146,15 @@ if (response.statusCode == 417) {
     "userID": 123
   }
 }
+  }
+}
 ```
+
+### Notification API
+- **Mark All Read (PUT)**: `{{BASE_URL}}service/user/account/notification/allRead`
+- **Mark Single Read (PUT)**: `{{BASE_URL}}service/user/account/notification/read`
+- **Delete Single (DELETE)**: `{{BASE_URL}}service/user/account/notification/delete`
+- **Delete All (DELETE)**: `{{BASE_URL}}service/user/account/notification/allDelete`
 
 ### 7. Session Management & Security
 - **Persistent Login**: Users must remain logged in until they explicitly log out. Store `userToken` and `userId` in `SharedPreferences`.

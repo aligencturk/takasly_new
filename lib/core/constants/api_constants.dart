@@ -23,4 +23,16 @@ class ApiConstants {
   // Event Endpoints
   static const String events = 'service/user/event/all';
   static const String eventDetail = 'service/user/event/'; // + {id}/detail
+
+  // General Endpoints
+  static const String logos = 'service/general/general/logos';
+  static const String categories =
+      'service/general/general/categories/'; // + {parentId}
+
+  // Notification Endpoints
+  static const String notAllRead = 'service/user/account/notification/allRead';
+  static const String notRead = 'service/user/account/notification/read';
+  static const String notDelete = 'service/user/account/notification/delete';
+  static const String notAllDelete =
+      'service/user/account/notification/allDelete';
 }

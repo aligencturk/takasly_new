@@ -46,7 +46,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '422264804561',
     projectId: 'takasla-b2aa5',
     authDomain: 'takasla-b2aa5.firebaseapp.com',
-    databaseURL: 'https://takasla-b2aa5-default-rtdb.europe-west1.firebasedatabase.app',
+    databaseURL:
+        'https://takasla-b2aa5-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'takasla-b2aa5.firebasestorage.app',
     measurementId: 'G-BFQQ20VFLK',
   );
@@ -56,7 +57,8 @@ class DefaultFirebaseOptions {
     appId: '1:422264804561:android:c96ee7ef79f29220ce61f0',
     messagingSenderId: '422264804561',
     projectId: 'takasla-b2aa5',
-    databaseURL: 'https://takasla-b2aa5-default-rtdb.europe-west1.firebasedatabase.app',
+    databaseURL:
+        'https://takasla-b2aa5-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'takasla-b2aa5.firebasestorage.app',
   );
 
@@ -65,10 +67,12 @@ class DefaultFirebaseOptions {
     appId: '1:422264804561:ios:6390ccb272e0b418ce61f0',
     messagingSenderId: '422264804561',
     projectId: 'takasla-b2aa5',
-    databaseURL: 'https://takasla-b2aa5-default-rtdb.europe-west1.firebasedatabase.app',
+    databaseURL:
+        'https://takasla-b2aa5-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'takasla-b2aa5.firebasestorage.app',
-    androidClientId: '422264804561-5vusvdlo298es4p8dsg1dvhar7lih11u.apps.googleusercontent.com',
-    iosBundleId: 'com.rivorya.takasly',
+    androidClientId:
+        '422264804561-5vusvdlo298es4p8dsg1dvhar7lih11u.apps.googleusercontent.com',
+    iosBundleId: 'com.rivorya.takaslyapp',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -76,10 +80,12 @@ class DefaultFirebaseOptions {
     appId: '1:422264804561:ios:6390ccb272e0b418ce61f0',
     messagingSenderId: '422264804561',
     projectId: 'takasla-b2aa5',
-    databaseURL: 'https://takasla-b2aa5-default-rtdb.europe-west1.firebasedatabase.app',
+    databaseURL:
+        'https://takasla-b2aa5-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'takasla-b2aa5.firebasestorage.app',
-    androidClientId: '422264804561-5vusvdlo298es4p8dsg1dvhar7lih11u.apps.googleusercontent.com',
-    iosBundleId: 'com.rivorya.takasly',
+    androidClientId:
+        '422264804561-5vusvdlo298es4p8dsg1dvhar7lih11u.apps.googleusercontent.com',
+    iosBundleId: 'com.rivorya.takaslyapp',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
@@ -88,7 +94,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '422264804561',
     projectId: 'takasla-b2aa5',
     authDomain: 'takasla-b2aa5.firebaseapp.com',
-    databaseURL: 'https://takasla-b2aa5-default-rtdb.europe-west1.firebasedatabase.app',
+    databaseURL:
+        'https://takasla-b2aa5-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'takasla-b2aa5.firebasestorage.app',
     measurementId: 'G-HTJ1TLC6J0',
   );

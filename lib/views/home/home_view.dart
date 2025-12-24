@@ -106,8 +106,8 @@ class _HomeViewState extends State<HomeView> {
                         SliverToBoxAdapter(
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                              vertical: 12.0,
+                              horizontal: 10.0,
+                              vertical: 10.0,
                             ),
                             child: Row(
                               children: [
@@ -115,7 +115,7 @@ class _HomeViewState extends State<HomeView> {
                                 if (homeViewModel.logos?.logo != null)
                                   Image.network(
                                     homeViewModel.logos!.logo!,
-                                    height: 60, // Adjust height
+                                    height: 50, // Adjust height
                                     errorBuilder: (c, e, s) => const Text(
                                       'Takasly',
                                       style: TextStyle(
