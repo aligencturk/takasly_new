@@ -4,6 +4,7 @@ import '../../theme/app_theme.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../auth/login_view.dart';
 import '../auth/register_view.dart';
+import 'profile_change_password_view.dart';
 
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
@@ -171,6 +172,15 @@ class ProfileView extends StatelessWidget {
                 _buildMenuItem(Icons.favorite_outline, "Favorilerim", () {}),
                 _buildDivider(),
                 _buildMenuItem(Icons.settings_outlined, "Ayarlar", () {}),
+                _buildDivider(),
+                _buildMenuItem(Icons.lock_reset, "Şifre Güncelle", () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ProfileChangePasswordView(),
+                    ),
+                  );
+                }),
               ],
             ),
           ),

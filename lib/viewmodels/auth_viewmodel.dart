@@ -188,7 +188,7 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
-  // Update Password Method
+  // Update Password Method (Forgot Password Flow)
   Future<void> updatePassword(String password, String passwordAgain) async {
     if (_passToken == null) {
       _state = AuthState.error;
@@ -219,6 +219,43 @@ class AuthViewModel extends ChangeNotifier {
       _state = AuthState.error;
       _errorMessage = e.toString();
       _logger.e("Update Password failed: $e");
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  // Update Password Method (Profile Flow)
+  Future<void> updateProfilePassword(
+    String password,
+    String passwordAgain,
+  ) async {
+    if (_user?.token == null) {
+      _state = AuthState.error;
+      _errorMessage = "Kullanıcı oturumu bulunamadı.";
+      notifyListeners();
+      return;
+    }
+
+    _state = AuthState.busy;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      // User says: use userToken as passToken
+      final request = UpdatePasswordRequestModel(
+        passToken: _user!.token,
+        password: password,
+        passwordAgain: passwordAgain,
+      );
+
+      await _authService.updatePassword(request);
+
+      _state = AuthState.success;
+      _logger.i("Profile password updated successfully.");
+    } catch (e) {
+      _state = AuthState.error;
+      _errorMessage = e.toString();
+      _logger.e("Profile Update Password failed: $e");
     } finally {
       notifyListeners();
     }
