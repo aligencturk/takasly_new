@@ -5,10 +5,26 @@ import '../models/auth/verification_model.dart';
 import '../models/auth/forgot_password_model.dart';
 import '../models/auth/get_user_model.dart';
 import '../models/profile/profile_detail_model.dart';
+import '../models/auth/social_login_model.dart';
 import 'api_service.dart';
 
 class AuthService {
   final ApiService _apiService = ApiService();
+
+  Future<LoginResponseModel> loginSocial(
+    SocialLoginRequestModel request,
+  ) async {
+    final response = await _apiService.post(
+      ApiConstants.loginSocial,
+      request.toJson(),
+    );
+
+    if (response['data'] != null) {
+      return LoginResponseModel.fromJson(response['data']);
+    } else {
+      throw Exception("Social Login failed: invalid response structure");
+    }
+  }
 
   Future<LoginResponseModel> login(LoginRequestModel request) async {
     final response = await _apiService.post(

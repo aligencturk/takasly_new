@@ -254,6 +254,87 @@ class _LoginViewState extends State<LoginView> {
                 const SizedBox(height: 24),
 
                 Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () async {
+                          await authViewModel.signInWithGoogle();
+                          if (context.mounted &&
+                              authViewModel.state == AuthState.success) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Giriş Başarılı!')),
+                            );
+                            Navigator.pop(context);
+                          }
+                        },
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          side: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // Placeholder for Google Icon
+                            const Icon(Icons.g_mobiledata, size: 28),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Google',
+                              style: AppTheme.safePoppins(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: AppTheme.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () async {
+                          await authViewModel.signInWithApple();
+                          if (context.mounted &&
+                              authViewModel.state == AuthState.success) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Giriş Başarılı!')),
+                            );
+                            Navigator.pop(context);
+                          }
+                        },
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          side: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.apple, size: 28),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Apple',
+                              style: AppTheme.safePoppins(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: AppTheme.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(

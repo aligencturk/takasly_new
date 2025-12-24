@@ -1,4 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import '../models/auth/social_login_model.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/auth/login_model.dart';
@@ -373,6 +379,159 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
+  // Social Login Methods
+
+  Future<void> signInWithGoogle() async {
+    _state = AuthState.busy;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        clientId: Platform.isIOS
+            ? '422264804561-llio284tijfqkh873at3ci09fna2epl0.apps.googleusercontent.com'
+            : null,
+        scopes: <String>['email'],
+      );
+
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+
+      if (googleUser == null) {
+        // User canceled the sign-in
+        _state = AuthState.idle;
+        notifyListeners();
+        return;
+      }
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      final String? idToken = googleAuth.idToken;
+
+      if (idToken == null) {
+        throw Exception("Google Sign-In failed: No ID Token retrieved.");
+      }
+
+      await _processSocialLogin(platform: 'google', idToken: idToken);
+    } catch (e) {
+      _state = AuthState.error;
+      _errorMessage = e.toString();
+      _logger.e("Google Sign-In failed: $e");
+    } finally {
+      if (_state != AuthState.success) {
+        notifyListeners();
+      }
+    }
+  }
+
+  Future<void> signInWithApple() async {
+    _state = AuthState.busy;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+
+      final String? identityToken = credential.identityToken;
+      if (identityToken == null) {
+        throw Exception("Apple Sign-In failed: No Identity Token retrieved.");
+      }
+
+      await _processSocialLogin(
+        platform: 'apple',
+        idToken: identityToken,
+        // appleGivenName: credential.givenName,
+        // appleFamilyName: credential.familyName,
+      );
+    } catch (e) {
+      if (e is SignInWithAppleAuthorizationException &&
+          e.code == AuthorizationErrorCode.canceled) {
+        _state = AuthState.idle;
+        notifyListeners();
+        return;
+      }
+      _state = AuthState.error;
+      _errorMessage = e.toString();
+      _logger.e("Apple Sign-In failed: $e");
+    } finally {
+      if (_state != AuthState.success) {
+        notifyListeners();
+      }
+    }
+  }
+
+  Future<void> _processSocialLogin({
+    required String platform,
+    required String idToken,
+  }) async {
+    try {
+      // 1. Get Device Info
+      final deviceData = await _getDeviceInfo();
+      final deviceID = deviceData['deviceID']!;
+      final devicePlatform = deviceData['devicePlatform']!;
+
+      // 2. Get App Version
+      final packageInfo = await PackageInfo.fromPlatform();
+      final version = packageInfo.version;
+
+      // 3. Get FCM Token
+      String? fcmToken;
+      // On iOS simulators or if APNs not configured, this might be null.
+      // We'll use a placeholder if null for dev purposes, but API might require it.
+      fcmToken ??= "fcm-token-not-available";
+
+      final request = SocialLoginRequestModel(
+        platform: platform,
+        deviceID: deviceID,
+        devicePlatform: devicePlatform,
+        version: version,
+        fcmToken: fcmToken,
+        idToken: idToken,
+      );
+
+      _user = await _authService.loginSocial(request);
+
+      if (_user != null) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('userToken', _user!.token);
+        await prefs.setInt('userId', _user!.userID);
+
+        _state = AuthState.success;
+        _logger.i(
+          "Social Login successful ($platform). User: ${_user!.userID}",
+        );
+      }
+      // notifyListeners() is called in finally block of caller
+    } catch (e) {
+      // Re-throw to be caught by caller
+      throw e;
+    }
+  }
+
+  Future<Map<String, String>> _getDeviceInfo() async {
+    final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+    String deviceID = "unknown";
+    String devicePlatform = Platform.isAndroid ? "android" : "ios";
+
+    try {
+      if (Platform.isAndroid) {
+        AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+        deviceID = androidInfo.id; // Board ID or similar
+      } else if (Platform.isIOS) {
+        IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
+        deviceID = iosInfo.identifierForVendor ?? "ios-vendor-id";
+      }
+    } catch (e) {
+      _logger.w("Could not get detailed device info: $e");
+    }
+
+    return {'deviceID': deviceID, 'devicePlatform': devicePlatform};
+  }
+
   Future<void> logout({bool autoRedirect = false}) async {
     _user = null;
     _userProfile = null;
@@ -380,6 +539,14 @@ class AuthViewModel extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('userToken');
     await prefs.remove('userId');
+
+    // Also sign out from social providers
+    try {
+      await GoogleSignIn().signOut();
+    } catch (_) {}
+
+    // Apple doesn't have a programmatic sign out that clears state in the same way,
+    // but we cleared our local session.
 
     _state = AuthState.idle;
     _errorMessage = null;
