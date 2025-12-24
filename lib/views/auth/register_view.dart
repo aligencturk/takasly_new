@@ -178,45 +178,32 @@ class _RegisterViewState extends State<RegisterView> {
                     onPressed: authViewModel.state == AuthState.busy
                         ? null
                         : () async {
-                            if (_formKey.currentState!.validate()) {
-                              if (!_policyAccepted || !_kvkkAccepted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Lütfen sözleşmeleri kabul edin.',
-                                    ),
-                                  ),
-                                );
-                                return;
-                              }
+                            await authViewModel.register(
+                              firstName: _firstNameController.text.trim(),
+                              lastName: _lastNameController.text.trim(),
+                              email: _emailController.text.trim(),
+                              phone: _phoneController.text.trim(),
+                              password: _passwordController.text,
+                              policy: _policyAccepted,
+                              kvkk: _kvkkAccepted,
+                            );
 
-                              await authViewModel.register(
-                                firstName: _firstNameController.text.trim(),
-                                lastName: _lastNameController.text.trim(),
-                                email: _emailController.text.trim(),
-                                phone: _phoneController.text.trim(),
-                                password: _passwordController.text,
-                                policy: _policyAccepted,
-                                kvkk: _kvkkAccepted,
+                            if (context.mounted &&
+                                authViewModel.state == AuthState.success) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Kayıt Başarılı! Kod Gönderildi.',
+                                  ),
+                                ),
                               );
-
-                              if (context.mounted &&
-                                  authViewModel.state == AuthState.success) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Kayıt Başarılı! Kod Gönderildi.',
-                                    ),
-                                  ),
-                                );
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const CodeVerificationView(),
-                                  ),
-                                );
-                              }
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const CodeVerificationView(),
+                                ),
+                              );
                             }
                           },
                     style: ElevatedButton.styleFrom(
@@ -276,8 +263,7 @@ class _RegisterViewState extends State<RegisterView> {
           controller: controller,
           obscureText: obscureText,
           keyboardType: keyboardType,
-          validator: (value) =>
-              (value == null || value.isEmpty) ? '$label gerekli' : null,
+
           decoration: InputDecoration(hintText: hint, prefixIcon: Icon(icon)),
         ),
       ],

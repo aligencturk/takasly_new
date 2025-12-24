@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../theme/app_theme.dart';
 import '../../viewmodels/auth_viewmodel.dart';
-import '../home/home_view.dart'; // Import HomeView for navigation after success
+import '../home/home_view.dart';
+import 'update_password_view.dart';
 
 class CodeVerificationView extends StatefulWidget {
   const CodeVerificationView({super.key});
@@ -27,19 +28,25 @@ class _CodeVerificationViewState extends State<CodeVerificationView> {
 
     // Listen for state changes to navigate
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (authViewModel.state == AuthState.success &&
-          authViewModel.user != null) {
-        // Verification success and user is logged in
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Doğrulama Başarılı!')));
-
-        // Navigate to HomeView and remove all previous routes
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeView()),
-          (route) => false,
-        );
+      if (authViewModel.state == AuthState.success) {
+        if (authViewModel.currentFlow == AuthFlow.register &&
+            authViewModel.user != null) {
+          // Register success -> Home
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Doğrulama Başarılı!')));
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeView()),
+            (route) => false,
+          );
+        } else if (authViewModel.currentFlow == AuthFlow.forgotPassword) {
+          // Forgot Password success -> Update Password
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const UpdatePasswordView()),
+          );
+        }
       }
     });
 
@@ -149,17 +156,7 @@ class _CodeVerificationViewState extends State<CodeVerificationView> {
                       ? null
                       : () {
                           final code = _codeController.text.trim();
-                          if (code.length < 4) {
-                            // Basic length check
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Lütfen geçerli bir kod giriniz.',
-                                ),
-                              ),
-                            );
-                            return;
-                          }
+
                           authViewModel.verifyCode(code);
                         },
                   style: ElevatedButton.styleFrom(

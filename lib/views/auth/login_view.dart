@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../theme/app_theme.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import 'register_view.dart';
+import 'forgot_password_view.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -99,15 +100,6 @@ class _LoginViewState extends State<LoginView> {
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _emailController,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Lütfen e-posta adresinizi girin';
-                    }
-                    if (!value.contains('@')) {
-                      return 'Geçerli bir e-posta adresi girin';
-                    }
-                    return null;
-                  },
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
                     hintText: 'ornek@email.com',
@@ -129,15 +121,6 @@ class _LoginViewState extends State<LoginView> {
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _passwordController,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Lütfen şifrenizi girin';
-                    }
-                    if (value.length < 6) {
-                      return 'Şifre en az 6 karakter olmalıdır';
-                    }
-                    return null;
-                  },
                   obscureText: true,
                   decoration: const InputDecoration(
                     hintText: '••••••••',
@@ -150,7 +133,12 @@ class _LoginViewState extends State<LoginView> {
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () {
-                      // Forgot password logic
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ForgotPasswordView(),
+                        ),
+                      );
                     },
                     child: Text(
                       'Şifremi Unuttum?',
@@ -200,22 +188,20 @@ class _LoginViewState extends State<LoginView> {
                     onPressed: authViewModel.state == AuthState.busy
                         ? null
                         : () async {
-                            if (_formKey.currentState!.validate()) {
-                              await authViewModel.login(
-                                _emailController.text.trim(),
-                                _passwordController.text,
-                              );
+                            await authViewModel.login(
+                              _emailController.text.trim(),
+                              _passwordController.text,
+                            );
 
-                              if (context.mounted &&
-                                  authViewModel.state == AuthState.success) {
-                                // Navigate to home or show success message
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Giriş Başarılı!'),
-                                  ),
-                                );
-                                Navigator.pop(context);
-                              }
+                            if (context.mounted &&
+                                authViewModel.state == AuthState.success) {
+                              // Navigate to home or show success message
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Giriş Başarılı!'),
+                                ),
+                              );
+                              Navigator.pop(context);
                             }
                           },
                     style: ElevatedButton.styleFrom(

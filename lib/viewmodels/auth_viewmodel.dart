@@ -3,9 +3,12 @@ import 'package:logger/logger.dart';
 import '../models/auth/login_model.dart';
 import '../models/auth/register_model.dart';
 import '../models/auth/verification_model.dart';
+import '../models/auth/forgot_password_model.dart';
 import '../services/auth_service.dart';
 
 enum AuthState { idle, busy, error, success }
+
+enum AuthFlow { register, forgotPassword }
 
 class AuthViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -24,6 +27,12 @@ class AuthViewModel extends ChangeNotifier {
   int? _tempUserId;
   String? _tempUserToken;
   String? _codeToken;
+
+  // Forgot Password Flow
+  AuthFlow _currentFlow = AuthFlow.register;
+  AuthFlow get currentFlow => _currentFlow;
+
+  String? _passToken;
 
   Future<void> login(String email, String password) async {
     _state = AuthState.busy;
@@ -58,6 +67,7 @@ class AuthViewModel extends ChangeNotifier {
   }) async {
     _state = AuthState.busy;
     _errorMessage = null;
+    _currentFlow = AuthFlow.register; // Set flow
     notifyListeners();
 
     try {
@@ -94,6 +104,31 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> forgotPassword(String email) async {
+    _state = AuthState.busy;
+    _errorMessage = null;
+    _currentFlow = AuthFlow.forgotPassword; // Set flow
+    notifyListeners();
+
+    try {
+      final request = ForgotPasswordRequestModel(userEmail: email);
+      final response = await _authService.forgotPassword(request);
+
+      _codeToken = response.codeToken;
+      // Note: We might not get a userToken here directly if the API doesn't return it for forgot password
+      // But we need codeToken for verification.
+
+      _state = AuthState.success;
+      _logger.i("Forgot Password request success. CodeToken: $_codeToken");
+    } catch (e) {
+      _state = AuthState.error;
+      _errorMessage = e.toString();
+      _logger.e("Forgot Password failed: $e");
+    } finally {
+      notifyListeners();
+    }
+  }
+
   Future<void> verifyCode(String code) async {
     if (_codeToken == null) {
       _state = AuthState.error;
@@ -112,13 +147,33 @@ class AuthViewModel extends ChangeNotifier {
         codeToken: _codeToken!,
       );
 
-      await _authService.verifyCode(request);
+      final response = await _authService.verifyCode(request);
 
-      // Verification successful, now we can log the user in
-      _user = LoginResponseModel(userID: _tempUserId!, token: _tempUserToken!);
+      if (_currentFlow == AuthFlow.register) {
+        // Verification successful, now we can log the user in
+        if (_tempUserId != null && _tempUserToken != null) {
+          _user = LoginResponseModel(
+            userID: _tempUserId!,
+            token: _tempUserToken!,
+          );
+          _logger.i(
+            "Verification successful (Register). User logged in: ${_user?.userID}",
+          );
+        } else {
+          // Should not happen in register flow usually
+          _logger.w(
+            "Verification success but missing temp user data for login.",
+          );
+        }
+      } else {
+        // Forgot Password Flow
+        _passToken = response.passToken;
+        _logger.i(
+          "Verification successful (Forgot Password). PassToken: $_passToken",
+        );
+      }
 
       _state = AuthState.success;
-      _logger.i("Verification successful. User logged in: ${_user?.userID}");
 
       // Clear temp data
       _tempUserId = null;
@@ -128,6 +183,42 @@ class AuthViewModel extends ChangeNotifier {
       _state = AuthState.error;
       _errorMessage = e.toString();
       _logger.e("Verification failed: $e");
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  // Update Password Method
+  Future<void> updatePassword(String password, String passwordAgain) async {
+    if (_passToken == null) {
+      _state = AuthState.error;
+      _errorMessage = "Şifre yenileme oturumu bulunamadı.";
+      notifyListeners();
+      return;
+    }
+
+    _state = AuthState.busy;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final request = UpdatePasswordRequestModel(
+        passToken: _passToken!,
+        password: password,
+        passwordAgain: passwordAgain,
+      );
+
+      await _authService.updatePassword(request);
+
+      _state = AuthState.success;
+      _logger.i("Password updated successfully.");
+
+      // Clear pass token
+      _passToken = null;
+    } catch (e) {
+      _state = AuthState.error;
+      _errorMessage = e.toString();
+      _logger.e("Update Password failed: $e");
     } finally {
       notifyListeners();
     }

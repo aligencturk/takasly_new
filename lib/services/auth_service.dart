@@ -2,6 +2,7 @@ import '../core/constants/api_constants.dart';
 import '../models/auth/login_model.dart';
 import '../models/auth/register_model.dart';
 import '../models/auth/verification_model.dart';
+import '../models/auth/forgot_password_model.dart';
 import 'api_service.dart';
 
 class AuthService {
@@ -76,5 +77,24 @@ class AuthService {
     } else {
       throw Exception("Resend code failed: invalid data");
     }
+  }
+
+  Future<ForgotPasswordResponseModel> forgotPassword(
+    ForgotPasswordRequestModel request,
+  ) async {
+    final response = await _apiService.post(
+      ApiConstants.forgotPassword,
+      request.toJson(),
+    );
+
+    if (response['data'] != null) {
+      return ForgotPasswordResponseModel.fromJson(response['data']);
+    } else {
+      throw Exception("Forgot password request failed: invalid data");
+    }
+  }
+
+  Future<void> updatePassword(UpdatePasswordRequestModel request) async {
+    await _apiService.post(ApiConstants.updatePass, request.toJson());
   }
 }
