@@ -13,7 +13,11 @@ import '../models/auth/verification_model.dart';
 import '../models/auth/forgot_password_model.dart';
 import '../models/auth/get_user_model.dart';
 import '../services/auth_service.dart';
+import '../services/account_service.dart'; // Import AccountService
 import '../services/api_service.dart';
+import '../models/account/update_user_model.dart'; // Import Account Models
+import '../models/account/change_password_model.dart';
+import '../models/account/delete_user_model.dart';
 import '../main.dart'; // For navigatorKey
 import '../views/auth/login_view.dart';
 
@@ -23,6 +27,8 @@ enum AuthFlow { register, forgotPassword }
 
 class AuthViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
+  final AccountService _accountService =
+      AccountService(); // Initialize AccountService
   final Logger _logger = Logger();
 
   AuthState _state = AuthState.idle;
@@ -571,5 +577,91 @@ class AuthViewModel extends ChangeNotifier {
     _state = AuthState.idle;
     _errorMessage = null;
     notifyListeners();
+  }
+
+  // Account Management Methods
+
+  Future<void> updateAccount(UpdateUserRequestModel request) async {
+    if (_user?.token == null) return;
+    request.userToken = _user!.token; // Ensure token is set
+
+    _state = AuthState.busy;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final response = await _accountService.updateUser(request);
+      if (response.success == true) {
+        _logger.i("User account updated successfully.");
+        // Refresh user profile
+        await getUser();
+      } else {
+        throw Exception(response.message ?? "Update failed");
+      }
+    } catch (e) {
+      _state = AuthState.error;
+      _errorMessage = e.toString();
+      _logger.e("Update User Account failed: $e");
+    } finally {
+      // If we are still in error state, notify, else success is handled by getUser or just complete
+      if (_state == AuthState.error) notifyListeners();
+    }
+  }
+
+  Future<void> changePasswordInApp(
+    String currentPassword,
+    String newPassword,
+    String newPasswordAgain,
+  ) async {
+    if (_user?.token == null) return;
+
+    _state = AuthState.busy;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final request = ChangePasswordRequestModel(
+        userToken: _user!.token,
+        currentPassword: currentPassword,
+        password: newPassword,
+        passwordAgain: newPasswordAgain,
+      );
+
+      final response = await _accountService.changePassword(request);
+      if (response.success == true) {
+        _state = AuthState.success;
+        _logger.i("Password changed successfully.");
+      } else {
+        throw Exception("Password change failed");
+      }
+    } catch (e) {
+      _state = AuthState.error;
+      _errorMessage = e.toString();
+      _logger.e("Change Password failed: $e");
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteAccount() async {
+    if (_user?.token == null) return;
+
+    _state = AuthState.busy;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final request = DeleteUserRequestModel(userToken: _user!.token);
+      await _accountService.deleteUser(request);
+
+      _logger.i("Account deleted successfully.");
+      // Logout user after deletion
+      await logout(autoRedirect: true);
+    } catch (e) {
+      _state = AuthState.error;
+      _errorMessage = e.toString();
+      _logger.e("Delete Account failed: $e");
+      notifyListeners();
+    }
   }
 }

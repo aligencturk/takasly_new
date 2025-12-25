@@ -44,4 +44,9 @@ class ApiConstants {
   static const String notDelete = 'service/user/account/notification/delete';
   static const String notAllDelete =
       'service/user/account/notification/allDelete';
+
+  // Account Management
+  static const String updateUser = 'service/user/update/account';
+  static const String changePassword = 'service/user/update/password';
+  static const String deleteUser = 'service/user/account/delete';
 }

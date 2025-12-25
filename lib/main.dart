@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:takasly/viewmodels/product_detail_viewmodel.dart';
 import 'firebase_options.dart';
 
 import 'views/home/home_view.dart'; // Import HomeView
@@ -36,6 +37,7 @@ class MyApp extends StatelessWidget {
         ), // Register EventViewModel
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
         ChangeNotifierProvider(create: (_) => ProfileViewModel()),
+        ChangeNotifierProvider(create: (_) => ProductDetailViewModel()),
       ],
       child: MaterialApp(
         title: 'Takasly',

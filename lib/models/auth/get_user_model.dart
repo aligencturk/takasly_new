@@ -48,6 +48,7 @@ class User {
   final int? totalProducts;
   final int? totalProductsG;
   final int? totalFavorites;
+  final bool? isShowContact; // Changed to bool
   final bool? isApproved;
   final bool? isTree;
   final List<Review>? reviews;
@@ -75,6 +76,7 @@ class User {
     this.totalProducts,
     this.totalProductsG,
     this.totalFavorites,
+    this.isShowContact, // Updated constructor
     this.isApproved,
     this.isTree,
     this.reviews,
@@ -104,6 +106,11 @@ class User {
       totalProducts: json['totalProducts'],
       totalProductsG: json['totalProductsG'],
       totalFavorites: json['totalFavorites'],
+      isShowContact:
+          json['isShowContact'] == true ||
+          json['showContact'] == true ||
+          json['isShowContact'] == 1 ||
+          json['showContact'] == 1,
       isApproved: json['isApproved'],
       isTree: json['isTree'],
       reviews: json['reviews'] != null
