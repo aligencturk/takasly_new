@@ -4,6 +4,7 @@ import '../../theme/app_theme.dart';
 import '../../viewmodels/trade_viewmodel.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../models/trade_model.dart';
+import '../../models/products/product_models.dart';
 
 class MyTradesView extends StatelessWidget {
   final bool showBackButton;
@@ -167,102 +168,240 @@ class _TradeItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppTheme.background,
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
-        border: Border.all(color: const Color(0xFFE0E0E0)),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  trade.theirProduct?.productTitle ?? 'Ürün',
-                  style: AppTheme.safePoppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+          // Header: Date & Status
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.calendar_today_rounded,
+                      size: 14,
+                      color: Color(0xFF94A3B8),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      trade.createdAt ?? '',
+                      style: AppTheme.safePoppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF94A3B8),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppTheme.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  trade.senderStatusTitle ?? 'Durum',
-                  style: AppTheme.safePoppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: AppTheme.primary,
-                  ),
-                ),
-              ),
-            ],
+                _buildStatusBadge(trade.senderStatusTitle ?? 'İşlemde'),
+              ],
+            ),
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              if (trade.myProduct?.productImage != null)
-                _buildProductImage(trade.myProduct!.productImage!),
-              if (trade.myProduct?.productImage != null)
+
+          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+
+          // Main Content: Product Swap
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                // My Product
+                Expanded(
+                  child: _buildProductColumn(
+                    title: 'Benim Ürünüm',
+                    product: trade.myProduct,
+                    isMe: true,
+                  ),
+                ),
+
+                // Swap Indicator
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Icon(Icons.swap_horiz, color: AppTheme.textSecondary),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: const Icon(
+                      Icons.swap_horiz_rounded,
+                      color: AppTheme.primary,
+                      size: 24,
+                    ),
+                  ),
                 ),
-              if (trade.theirProduct?.productImage != null)
-                _buildProductImage(trade.theirProduct!.productImage!),
-            ],
+
+                // Their Product
+                Expanded(
+                  child: _buildProductColumn(
+                    title: 'Takaslanan',
+                    product: trade.theirProduct,
+                    isMe: false,
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                trade.deliveryType ?? '',
-                style: AppTheme.safePoppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  color: AppTheme.textSecondary,
+
+          // Footer: Info
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+            ),
+            child: Row(
+              children: [
+                _buildInfoChip(
+                  Icons.local_shipping_outlined,
+                  trade.deliveryType ?? 'Teslimat Yok',
                 ),
-              ),
-              Text(
-                trade.createdAt ?? '',
-                style: AppTheme.safePoppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  color: AppTheme.textSecondary,
-                ),
-              ),
-            ],
+                const SizedBox(width: 12),
+                if (trade.meetingLocation != null &&
+                    trade.meetingLocation!.isNotEmpty)
+                  Expanded(
+                    child: _buildInfoChip(
+                      Icons.location_on_outlined,
+                      trade.meetingLocation!,
+                    ),
+                  ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildProductImage(String url) {
+  Widget _buildProductColumn({
+    required String title,
+    required Product? product,
+    required bool isMe,
+  }) {
+    return Column(
+      crossAxisAlignment: isMe
+          ? CrossAxisAlignment.start
+          : CrossAxisAlignment.end,
+      children: [
+        Text(
+          title,
+          style: AppTheme.safePoppins(
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF94A3B8),
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 100,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            color: Colors.white,
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            image: product?.productImage != null
+                ? DecorationImage(
+                    image: NetworkImage(product!.productImage!),
+                    fit: BoxFit.cover,
+                  )
+                : null,
+          ),
+          child: product?.productImage == null
+              ? const Center(
+                  child: Icon(
+                    Icons.image_not_supported_rounded,
+                    color: Color(0xFFCBD5E1),
+                  ),
+                )
+              : null,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          product?.productTitle ?? 'Ürün Silinmiş',
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          textAlign: isMe ? TextAlign.start : TextAlign.end,
+          style: AppTheme.safePoppins(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: const Color(0xFF1E293B),
+            height: 1.3,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatusBadge(String status) {
+    Color bgColor;
+    Color textColor;
+
+    // Simple heuristic for colors
+    final s = status.toLowerCase();
+    if (s.contains('tamam') || s.contains('onay')) {
+      bgColor = const Color(0xFFDCFCE7); // Green-100
+      textColor = const Color(0xFF166534); // Green-800
+    } else if (s.contains('red') || s.contains('iptal')) {
+      bgColor = const Color(0xFFFEE2E2); // Red-100
+      textColor = const Color(0xFF991B1B); // Red-800
+    } else if (s.contains('bekle')) {
+      bgColor = const Color(0xFFFEF3C7); // Amber-100
+      textColor = const Color(0xFF92400E); // Amber-800
+    } else {
+      bgColor = const Color(0xFFE0F2FE); // Sky-100
+      textColor = const Color(0xFF075985); // Sky-800
+    }
+
     return Container(
-      width: 60,
-      height: 60,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        image: DecorationImage(image: NetworkImage(url), fit: BoxFit.cover),
+        color: bgColor,
+        borderRadius: BorderRadius.circular(20),
       ),
+      child: Text(
+        status,
+        style: AppTheme.safePoppins(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: textColor,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoChip(IconData icon, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: const Color(0xFF64748B)),
+        const SizedBox(width: 4),
+        Flexible(
+          child: Text(
+            label,
+            style: AppTheme.safePoppins(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF64748B),
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 }
