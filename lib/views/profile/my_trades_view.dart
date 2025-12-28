@@ -14,10 +14,7 @@ class MyTradesView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => TradeViewModel(),
-      child: _MyTradesViewContent(showBackButton: showBackButton),
-    );
+    return _MyTradesViewContent(showBackButton: showBackButton);
   }
 }
 

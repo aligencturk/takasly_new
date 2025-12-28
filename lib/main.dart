@@ -13,6 +13,7 @@ import 'viewmodels/event_viewmodel.dart'; // Import EventViewModel
 import 'viewmodels/auth_viewmodel.dart'; // Import AuthViewModel
 import 'viewmodels/profile_viewmodel.dart';
 import 'viewmodels/ticket_viewmodel.dart';
+import 'viewmodels/trade_viewmodel.dart';
 import 'theme/app_theme.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -40,6 +41,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ProfileViewModel()),
         ChangeNotifierProvider(create: (_) => ProductDetailViewModel()),
         ChangeNotifierProvider(create: (_) => TicketViewModel()),
+        ChangeNotifierProvider(create: (_) => TradeViewModel()),
       ],
       child: MaterialApp(
         title: 'Takasly',
@@ -47,6 +49,14 @@ class MyApp extends StatelessWidget {
         theme: AppTheme.lightTheme,
         navigatorKey: navigatorKey,
         home: const HomeView(),
+        builder: (context, child) {
+          return GestureDetector(
+            onTap: () {
+              FocusManager.instance.primaryFocus?.unfocus();
+            },
+            child: child,
+          );
+        },
       ),
     );
   }

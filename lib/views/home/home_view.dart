@@ -5,6 +5,8 @@ import '../../viewmodels/home_viewmodel.dart';
 import '../../viewmodels/product_viewmodel.dart';
 import '../../viewmodels/product_detail_viewmodel.dart';
 import '../../viewmodels/auth_viewmodel.dart';
+import '../../viewmodels/ticket_viewmodel.dart';
+import '../../viewmodels/trade_viewmodel.dart';
 import '../../theme/app_theme.dart';
 import '../widgets/category_card.dart';
 import '../widgets/product_card.dart';
@@ -85,6 +87,41 @@ class _HomeViewState extends State<HomeView> {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
       context.read<ProductViewModel>().loadNextPage();
+    }
+  }
+
+  void _refreshCurrentPage() {
+    final authVM = context.read<AuthViewModel>();
+    final token = authVM.user?.token;
+    final userID = authVM.user?.userID;
+
+    switch (_selectedIndex) {
+      case 0: // Home
+        context.read<ProductViewModel>().fetchProducts(isRefresh: true);
+        context.read<HomeViewModel>().init();
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            0,
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeInOut,
+          );
+        }
+        break;
+      case 1: // Messages
+        if (token != null) {
+          context.read<TicketViewModel>().fetchTickets(token, isRefresh: true);
+        }
+        break;
+      case 3: // My Trades
+        if (userID != null) {
+          context.read<TradeViewModel>().getTrades(userID);
+        }
+        break;
+      case 4: // Profile
+        if (authVM.user != null) {
+          authVM.getUser();
+        }
+        break;
     }
   }
 
@@ -493,9 +530,13 @@ class _HomeViewState extends State<HomeView> {
       bottomNavigationBar: CustomBottomNavigationBar(
         selectedIndex: _selectedIndex,
         onItemSelected: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
+          if (_selectedIndex == index) {
+            _refreshCurrentPage();
+          } else {
+            setState(() {
+              _selectedIndex = index;
+            });
+          }
         },
       ),
     );
