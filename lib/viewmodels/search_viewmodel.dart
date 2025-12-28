@@ -3,11 +3,16 @@ import '../models/products/product_models.dart';
 import '../services/product_service.dart';
 import 'package:logger/logger.dart';
 
+import '../services/general_service.dart';
+import '../models/search/popular_category_model.dart';
+
 class SearchViewModel extends ChangeNotifier {
   final ProductService _productService = ProductService();
+  final GeneralService _generalService = GeneralService();
   final Logger _logger = Logger();
 
   List<Product> products = [];
+  List<PopularCategory> popularCategories = [];
   bool isLoading = false;
   bool isLoadMoreRunning = false;
   bool isLastPage = false;
@@ -15,12 +20,28 @@ class SearchViewModel extends ChangeNotifier {
   String? errorMessage;
   String _currentQuery = "";
 
+  String get currentQuery => _currentQuery;
+
   // Debounce helper could be added here if we were doing live search,
   // but for a dedicated search page triggered by "enter", simple state is enough.
+
+  Future<void> init() async {
+    await fetchPopularCategories();
+  }
+
+  Future<void> fetchPopularCategories() async {
+    try {
+      popularCategories = await _generalService.getPopularCategories();
+      notifyListeners();
+    } catch (e) {
+      _logger.e("Error fetching popular categories: $e");
+    }
+  }
 
   Future<void> search(String query, {bool isRefresh = true}) async {
     if (query.trim().isEmpty) {
       products = [];
+      _currentQuery = ""; // Clear query if empty
       notifyListeners();
       return;
     }

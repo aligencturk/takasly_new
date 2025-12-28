@@ -2,8 +2,24 @@ import 'api_service.dart';
 import '../core/constants/api_constants.dart';
 import '../models/general_models.dart';
 
+import '../models/search/popular_category_model.dart';
+
 class GeneralService {
   final ApiService _apiService = ApiService();
+
+  Future<List<PopularCategory>> getPopularCategories() async {
+    try {
+      final response = await _apiService.get(ApiConstants.popularCategories);
+      if (response['success'] == true && response['data'] != null) {
+        final List list = response['data']['categories'];
+        return list.map((e) => PopularCategory.fromJson(e)).toList();
+      }
+      return [];
+    } catch (e) {
+      // Return empty list on failure to avoid blocking UI
+      return [];
+    }
+  }
 
   Future<Map<String, dynamic>> getLogos() async {
     try {
