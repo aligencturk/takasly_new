@@ -2,6 +2,9 @@ import '../core/constants/api_constants.dart';
 import '../models/account/update_user_model.dart';
 import '../models/account/change_password_model.dart';
 import '../models/account/delete_user_model.dart';
+import '../models/account/blocked_user_model.dart';
+import '../models/account/blocked_users_list_model.dart';
+import '../models/account/unblock_user_model.dart';
 import 'api_service.dart';
 
 class AccountService {
@@ -42,5 +45,25 @@ class AccountService {
 
   Future<void> deleteUser(DeleteUserRequestModel request) async {
     await _apiService.post(ApiConstants.deleteUser, request.toJson());
+  }
+
+  Future<void> blockUser(BlockedUserRequest request) async {
+    await _apiService.post(ApiConstants.userBlocked, request.toJson());
+  }
+
+  Future<BlockedUsersListResponse> getBlockedUsers(int userId) async {
+    final response = await _apiService.get(
+      '${ApiConstants.blockedUsers}$userId/blockedUsers',
+    );
+
+    if (response != null) {
+      return BlockedUsersListResponse.fromJson(response);
+    } else {
+      throw Exception("Get Blocked Users failed: invalid response");
+    }
+  }
+
+  Future<void> unblockUser(UnblockUserRequest request) async {
+    await _apiService.post(ApiConstants.userUnBlocked, request.toJson());
   }
 }

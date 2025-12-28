@@ -9,6 +9,9 @@ import '../../models/tickets/ticket_model.dart';
 import '../products/product_detail_view.dart';
 import '../profile/user_profile_view.dart';
 import '../../viewmodels/profile_viewmodel.dart';
+import '../../viewmodels/product_viewmodel.dart';
+import '../../viewmodels/home_viewmodel.dart';
+import '../home/home_view.dart';
 
 class ChatView extends StatefulWidget {
   final Ticket ticket;
@@ -110,6 +113,126 @@ class _ChatViewState extends State<ChatView> {
     }
   }
 
+  void _showReportDialog() {
+    final TextEditingController reasonController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Kullanıcıyı Raporla"),
+        content: TextField(
+          controller: reasonController,
+          decoration: const InputDecoration(
+            hintText: "Raporlama sebebinizi yazın...",
+          ),
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("İptal"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final reason = reasonController.text.trim();
+              if (reason.isEmpty) return;
+
+              final authVM = context.read<AuthViewModel>();
+              final ticketVM = context.read<TicketViewModel>();
+
+              if (authVM.user?.token != null &&
+                  widget.ticket.otherUserID != null) {
+                final success = await ticketVM.reportUser(
+                  userToken: authVM.user!.token,
+                  reportedUserID: widget.ticket.otherUserID!,
+                  reason: reason,
+                  step: "user", // As per requirement
+                  productID: widget.ticket.productID,
+                  offerID: widget.ticket.offerID,
+                );
+
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        success
+                            ? "Kullanıcı raporlandı."
+                            : "Raporlanırken hata oluştu.",
+                      ),
+                      backgroundColor: success ? Colors.green : Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text("Gönder"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showBlockConfirmDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Kullanıcıyı Engelle"),
+        content: const Text(
+          "Bu kullanıcıyı engellemek istediğinize emin misiniz? Bu işlemden sonra birbirinize mesaj gönderemeyeceksiniz.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("İptal"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              final authVM = context.read<AuthViewModel>();
+              final ticketVM = context.read<TicketViewModel>();
+
+              if (authVM.user?.token != null &&
+                  widget.ticket.otherUserID != null) {
+                final success = await ticketVM.blockUser(
+                  userToken: authVM.user!.token,
+                  blockedUserID: widget.ticket.otherUserID!,
+                );
+
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  if (success) {
+                    // Trigger refresh on all data
+                    context.read<ProductViewModel>().fetchProducts(
+                      isRefresh: true,
+                    );
+                    context.read<HomeViewModel>().init();
+
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (_) => const HomeView()),
+                      (route) => false,
+                    );
+                  }
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        success
+                            ? "Kullanıcı engellendi."
+                            : "Engellenirken hata oluştu.",
+                      ),
+                      backgroundColor: success ? Colors.green : Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text("Engelle", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _navigateToProfile(int? userId) {
     if (userId != null) {
       Navigator.push(
@@ -150,6 +273,10 @@ class _ChatViewState extends State<ChatView> {
             onSelected: (value) {
               if (value == 'profile') {
                 _navigateToProfile(widget.ticket.otherUserID);
+              } else if (value == 'report') {
+                _showReportDialog();
+              } else if (value == 'block') {
+                _showBlockConfirmDialog();
               }
             },
             itemBuilder: (BuildContext context) {
@@ -161,6 +288,30 @@ class _ChatViewState extends State<ChatView> {
                       Icon(Icons.person_outline, size: 18),
                       SizedBox(width: 8),
                       Text("Kullanıcının profiline git"),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'report',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.report_problem_outlined,
+                        size: 18,
+                        color: Colors.orange,
+                      ),
+                      SizedBox(width: 8),
+                      Text("Kullanıcıyı Raporla"),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'block',
+                  child: Row(
+                    children: [
+                      Icon(Icons.block_flipped, size: 18, color: Colors.red),
+                      SizedBox(width: 8),
+                      Text("Kullanıcıyı Engelle"),
                     ],
                   ),
                 ),

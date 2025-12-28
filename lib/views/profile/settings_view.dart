@@ -6,6 +6,7 @@ import '../../viewmodels/auth_viewmodel.dart';
 import 'profile_edit_view.dart';
 import 'change_password_view.dart';
 import 'contact_view.dart';
+import 'blocked_users_view.dart';
 
 class SettingsView extends StatelessWidget {
   const SettingsView({super.key});
@@ -46,6 +47,20 @@ class SettingsView extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (context) => const ChangePasswordView(),
+                      ),
+                    );
+                  },
+                ),
+                _buildDivider(),
+                _buildSettingsItem(
+                  context,
+                  icon: Icons.block_flipped,
+                  title: "Engellenen Kullanıcılar",
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const BlockedUsersView(),
                       ),
                     );
                   },

@@ -5,6 +5,9 @@ import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/profile_viewmodel.dart';
 import '../../models/profile/profile_detail_model.dart';
 import 'profile_change_password_view.dart';
+import '../../viewmodels/product_viewmodel.dart';
+import '../../viewmodels/home_viewmodel.dart';
+import '../home/home_view.dart';
 
 class UserProfileView extends StatefulWidget {
   final int userId;
@@ -35,6 +38,122 @@ class _UserProfileViewState extends State<UserProfileView> {
     });
   }
 
+  void _showReportDialog() {
+    final TextEditingController reasonController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Kullanıcıyı Raporla"),
+        content: TextField(
+          controller: reasonController,
+          decoration: const InputDecoration(
+            hintText: "Raporlama sebebinizi yazın...",
+          ),
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("İptal"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final reason = reasonController.text.trim();
+              if (reason.isEmpty) return;
+
+              final authVM = context.read<AuthViewModel>();
+              final profileVM = context.read<ProfileViewModel>();
+
+              if (authVM.user?.token != null) {
+                final success = await profileVM.reportUser(
+                  userToken: authVM.user!.token,
+                  reportedUserID: widget.userId,
+                  reason: reason,
+                  step: "user",
+                );
+
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        success
+                            ? "Kullanıcı raporlandı."
+                            : "Raporlanırken hata oluştu.",
+                      ),
+                      backgroundColor: success ? Colors.green : Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text("Gönder"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showBlockConfirmDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Kullanıcıyı Engelle"),
+        content: const Text(
+          "Bu kullanıcıyı engellemek istediğinize emin misiniz? Bu işlemden sonra birbirinize mesaj gönderemeyeceksiniz.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("İptal"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              final authVM = context.read<AuthViewModel>();
+              final profileVM = context.read<ProfileViewModel>();
+
+              if (authVM.user?.token != null) {
+                final success = await profileVM.blockUser(
+                  userToken: authVM.user!.token,
+                  blockedUserID: widget.userId,
+                );
+
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  if (success) {
+                    // Trigger refresh on all data
+                    context.read<ProductViewModel>().fetchProducts(
+                      isRefresh: true,
+                    );
+                    context.read<HomeViewModel>().init();
+
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (_) => const HomeView()),
+                      (route) => false,
+                    );
+                  }
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        success
+                            ? "Kullanıcı engellendi."
+                            : "Engellenirken hata oluştu.",
+                      ),
+                      backgroundColor: success ? Colors.green : Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text("Engelle", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<ProfileViewModel>(
@@ -57,6 +176,51 @@ class _UserProfileViewState extends State<UserProfileView> {
             backgroundColor: AppTheme.primary,
             iconTheme: const IconThemeData(color: Colors.white),
             centerTitle: true,
+            actions: [
+              if (!isCurrentUser)
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert, color: Colors.white),
+                  onSelected: (value) {
+                    if (value == 'report') {
+                      _showReportDialog();
+                    } else if (value == 'block') {
+                      _showBlockConfirmDialog();
+                    }
+                  },
+                  itemBuilder: (BuildContext context) {
+                    return [
+                      const PopupMenuItem<String>(
+                        value: 'report',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.report_problem_outlined,
+                              size: 18,
+                              color: Colors.orange,
+                            ),
+                            SizedBox(width: 8),
+                            Text("Kullanıcıyı Raporla"),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'block',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.block_flipped,
+                              size: 18,
+                              color: Colors.red,
+                            ),
+                            SizedBox(width: 8),
+                            Text("Kullanıcıyı Engelle"),
+                          ],
+                        ),
+                      ),
+                    ];
+                  },
+                ),
+            ],
           ),
           body: isBusy
               ? const Center(child: CircularProgressIndicator())

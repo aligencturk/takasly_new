@@ -14,6 +14,8 @@ import 'viewmodels/auth_viewmodel.dart'; // Import AuthViewModel
 import 'viewmodels/profile_viewmodel.dart';
 import 'viewmodels/ticket_viewmodel.dart';
 import 'viewmodels/trade_viewmodel.dart';
+import 'viewmodels/blocked_users_viewmodel.dart';
+
 import 'theme/app_theme.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -42,6 +44,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ProductDetailViewModel()),
         ChangeNotifierProvider(create: (_) => TicketViewModel()),
         ChangeNotifierProvider(create: (_) => TradeViewModel()),
+        ChangeNotifierProvider(create: (_) => BlockedUsersViewModel()),
       ],
       child: MaterialApp(
         title: 'Takasly',

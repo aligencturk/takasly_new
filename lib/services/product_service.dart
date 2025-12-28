@@ -4,6 +4,7 @@ import '../models/products/product_models.dart';
 import '../models/trade_model.dart';
 import '../models/product_detail_model.dart';
 import '../models/trade_detail_model.dart';
+import '../models/user/report_user_model.dart';
 
 class ProductService {
   final ApiService _apiService = ApiService();
@@ -107,6 +108,14 @@ class ProductService {
       } else {
         throw Exception('Takas detayı yüklenemedi.');
       }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> reportUser(ReportUserRequest request) async {
+    try {
+      await _apiService.post(ApiConstants.reportUser, request.toJson());
     } catch (e) {
       rethrow;
     }
