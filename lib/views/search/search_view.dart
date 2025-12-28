@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
 import '../../viewmodels/search_viewmodel.dart';
 import '../../viewmodels/product_detail_viewmodel.dart'; // For navigation to details
 import '../../theme/app_theme.dart';
 import '../widgets/product_card.dart';
 import '../products/product_detail_view.dart';
+import '../../models/search/popular_category_model.dart';
 
 class SearchView extends StatefulWidget {
   const SearchView({super.key});
@@ -21,6 +24,9 @@ class _SearchViewState extends State<SearchView> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<SearchViewModel>().init();
+    });
   }
 
   @override
@@ -237,6 +243,9 @@ class _SearchViewState extends State<SearchView> {
 
           if (viewModel.products.isEmpty) {
             if (_searchController.text.isEmpty) {
+              if (viewModel.popularCategories.isNotEmpty) {
+                return _buildPopularCategories(viewModel.popularCategories);
+              }
               return _buildEmptyState(
                 icon: Icons.manage_search_rounded,
                 title: "Keşfetmeye Hazır mısın?",
@@ -255,10 +264,56 @@ class _SearchViewState extends State<SearchView> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (viewModel.currentCategoryName != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: AppTheme.primary.withOpacity(0.2),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              "Kategori: ${viewModel.currentCategoryName}",
+                              style: AppTheme.safePoppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.primary,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () {
+                                context.read<SearchViewModel>().clearSearch();
+                                _searchController.clear();
+                              },
+                              child: const Icon(
+                                Icons.close_rounded,
+                                size: 18,
+                                color: AppTheme.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+                padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
                 child: Text(
-                  "${viewModel.products.length} Sonuç Bulundu",
+                  "${viewModel.totalItems} Sonuç Bulundu",
                   style: AppTheme.safePoppins(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -315,6 +370,94 @@ class _SearchViewState extends State<SearchView> {
             ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildPopularCategories(List<PopularCategory> categories) {
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      children: [
+        Text(
+          "Popüler Kategoriler",
+          style: AppTheme.safePoppins(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.textSecondary,
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(height: 20),
+        ...categories.map((category) => _buildPopularCategoryItem(category)),
+      ],
+    );
+  }
+
+  Widget _buildPopularCategoryItem(PopularCategory category) {
+    return InkWell(
+      onTap: () {
+        context.read<SearchViewModel>().searchByCategory(
+          category.catID,
+          category.catName,
+        );
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        child: Row(
+          children: [
+            // Icon
+            Container(
+              width: 44,
+              height: 44,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppTheme.primary.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: category.catImage.toLowerCase().endsWith('.svg')
+                  ? SvgPicture.network(
+                      category.catImage,
+                      placeholderBuilder: (context) => const SizedBox.shrink(),
+                    )
+                  : Image.network(category.catImage),
+            ),
+            const SizedBox(width: 16),
+            // Title
+            Expanded(
+              child: Text(
+                category.catName,
+                style: AppTheme.safePoppins(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+            ),
+            // Product count chip
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                "${category.productCount}",
+                style: AppTheme.safePoppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppTheme.textSecondary,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: Colors.grey.shade400,
+              size: 20,
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -20,7 +20,13 @@ class SearchViewModel extends ChangeNotifier {
   String? errorMessage;
   String _currentQuery = "";
 
+  int? _currentCategoryId;
+  String? _currentCategoryName;
+
+  int totalItems = 0;
+
   String get currentQuery => _currentQuery;
+  String? get currentCategoryName => _currentCategoryName;
 
   // Debounce helper could be added here if we were doing live search,
   // but for a dedicated search page triggered by "enter", simple state is enough.
@@ -38,10 +44,23 @@ class SearchViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> searchByCategory(int categoryId, String categoryName) async {
+    _currentCategoryId = categoryId;
+    _currentCategoryName = categoryName;
+    _currentQuery = ""; // Clear text search
+    await _performSearchRequest(isRefresh: true);
+  }
+
   Future<void> search(String query, {bool isRefresh = true}) async {
-    if (query.trim().isEmpty) {
+    if (isRefresh) {
+      _currentCategoryId = null; // Clear category filter
+      _currentCategoryName = null;
+    }
+
+    if (query.trim().isEmpty && _currentCategoryId == null) {
       products = [];
-      _currentQuery = ""; // Clear query if empty
+      _currentQuery = "";
+      totalItems = 0;
       notifyListeners();
       return;
     }
@@ -52,20 +71,24 @@ class SearchViewModel extends ChangeNotifier {
       isLastPage = false;
       currentPage = 1;
       products = [];
+      totalItems = 0;
       errorMessage = null;
       notifyListeners();
     } else {
-      // Load more checks
       if (isLoadMoreRunning || isLastPage) return;
       isLoadMoreRunning = true;
       notifyListeners();
     }
 
+    await _performSearchRequest(isRefresh: isRefresh);
+  }
+
+  Future<void> _performSearchRequest({required bool isRefresh}) async {
     try {
       final requestModel = ProductRequestModel(
         page: currentPage,
         searchText: _currentQuery,
-        // Optional: Include other filters if needed, e.g. from user preferences
+        categoryID: _currentCategoryId,
       );
 
       final response = await _productService.getAllProducts(requestModel);
@@ -73,13 +96,17 @@ class SearchViewModel extends ChangeNotifier {
       if (response.success == true && response.data != null) {
         final newProducts = response.data!.products ?? [];
 
+        // Update total items count
+        if (response.data!.totalItems != null) {
+          totalItems = response.data!.totalItems!;
+        }
+
         if (isRefresh) {
           products = newProducts;
         } else {
           products.addAll(newProducts);
         }
 
-        // Pagination Check
         if (newProducts.isEmpty) {
           isLastPage = true;
         } else if (response.data?.totalPages != null &&
@@ -102,16 +129,20 @@ class SearchViewModel extends ChangeNotifier {
   }
 
   void loadMore() {
-    if (_currentQuery.isNotEmpty &&
+    if ((_currentQuery.isNotEmpty || _currentCategoryId != null) &&
         !isLoading &&
         !isLoadMoreRunning &&
         !isLastPage) {
-      search(_currentQuery, isRefresh: false);
+      isLoadMoreRunning = true;
+      notifyListeners();
+      _performSearchRequest(isRefresh: false);
     }
   }
 
   void clearSearch() {
     _currentQuery = "";
+    _currentCategoryId = null;
+    _currentCategoryName = null;
     products = [];
     errorMessage = null;
     isLastPage = false;
