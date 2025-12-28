@@ -8,7 +8,13 @@ class EventViewModel extends ChangeNotifier {
   final Logger _logger = Logger();
 
   List<EventModel> _events = [];
-  List<EventModel> get events => _events;
+  List<EventModel> _filteredEvents = [];
+  List<EventModel> get events => _filteredEvents.isEmpty && _searchQuery.isEmpty
+      ? _events
+      : _filteredEvents;
+
+  String _searchQuery = '';
+  String get searchQuery => _searchQuery;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -19,6 +25,28 @@ class EventViewModel extends ChangeNotifier {
   EventModel? _selectedEvent;
   EventModel? get selectedEvent => _selectedEvent;
 
+  void setSearchQuery(String query) {
+    _searchQuery = query;
+    _filterEvents();
+  }
+
+  void _filterEvents() {
+    if (_searchQuery.isEmpty) {
+      _filteredEvents = _events;
+    } else {
+      _filteredEvents = _events.where((event) {
+        final title = event.eventTitle.toLowerCase();
+        final desc = event.eventDesc.toLowerCase();
+        final cat = (event.categoryTitle ?? '').toLowerCase();
+        final query = _searchQuery.toLowerCase();
+        return title.contains(query) ||
+            desc.contains(query) ||
+            cat.contains(query);
+      }).toList();
+    }
+    notifyListeners();
+  }
+
   Future<void> fetchEvents() async {
     _isLoading = true;
     _errorMessage = null;
@@ -26,6 +54,7 @@ class EventViewModel extends ChangeNotifier {
 
     try {
       _events = await _eventService.getEvents();
+      _filterEvents(); // Apply filter to newly fetched events
     } catch (e) {
       _logger.e('Error fetching events: $e');
       _errorMessage = 'Etkinlikler yüklenirken bir hata oluştu.';

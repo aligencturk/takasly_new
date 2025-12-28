@@ -7,6 +7,8 @@ class EventModel {
   final String eventStartDate;
   final String eventEndDate;
   final String createDate;
+  final int? categoryID;
+  final String? categoryTitle;
   final List<EventImage>? images;
 
   EventModel({
@@ -18,6 +20,8 @@ class EventModel {
     required this.eventStartDate,
     required this.eventEndDate,
     required this.createDate,
+    this.categoryID,
+    this.categoryTitle,
     this.images,
   });
 
@@ -33,6 +37,8 @@ class EventModel {
       eventStartDate: json['eventStartDate'] ?? '',
       eventEndDate: json['eventEndDate'] ?? '',
       createDate: json['createDate'] ?? '',
+      categoryID: json['categoryID'],
+      categoryTitle: json['categoryTitle'],
       images: json['images'] != null
           ? (json['images'] as List).map((i) => EventImage.fromJson(i)).toList()
           : null,
