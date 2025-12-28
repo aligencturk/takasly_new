@@ -13,6 +13,8 @@ import '../widgets/product_card.dart';
 import '../notifications/notifications_view.dart';
 import '../widgets/custom_bottom_nav.dart';
 import 'widgets/filter_bottom_sheet.dart';
+import '../search/search_view.dart';
+import '../../viewmodels/search_viewmodel.dart';
 
 import '../events/events_view.dart';
 import '../profile/profile_view.dart';
@@ -303,28 +305,43 @@ class _HomeViewState extends State<HomeView> {
                                   child: Row(
                                     children: [
                                       Expanded(
-                                        child: TextField(
-                                          decoration: InputDecoration(
-                                            hintText: 'Ürün ara...',
-                                            prefixIcon: const Icon(
-                                              Icons.search,
-                                              color: Colors.grey,
-                                            ),
-                                            filled: true,
-                                            fillColor: Colors.white,
-                                            border: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(30),
-                                              borderSide: BorderSide.none,
-                                            ),
-                                            contentPadding:
-                                                const EdgeInsets.symmetric(
-                                                  vertical: 0,
-                                                ),
-                                          ),
-                                          onChanged: (val) {
-                                            // Search debouncing could be added here
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    ChangeNotifierProvider(
+                                                      create: (_) =>
+                                                          SearchViewModel(),
+                                                      child: const SearchView(),
+                                                    ),
+                                              ),
+                                            );
                                           },
+                                          child: AbsorbPointer(
+                                            child: TextField(
+                                              readOnly: true,
+                                              decoration: InputDecoration(
+                                                hintText: 'Ürün ara...',
+                                                prefixIcon: const Icon(
+                                                  Icons.search,
+                                                  color: Colors.grey,
+                                                ),
+                                                filled: true,
+                                                fillColor: Colors.white,
+                                                border: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(30),
+                                                  borderSide: BorderSide.none,
+                                                ),
+                                                contentPadding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 0,
+                                                    ),
+                                              ),
+                                            ),
+                                          ),
                                         ),
                                       ),
                                       const SizedBox(width: 12),
