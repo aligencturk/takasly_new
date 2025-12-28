@@ -54,4 +54,7 @@ class ApiConstants {
   static const String updateUser = 'service/user/update/account';
   static const String changePassword = 'service/user/update/password';
   static const String deleteUser = 'service/user/account/delete';
+  static const String userTickets = 'service/user/account/tickets/list';
+  static const String ticketMessages = 'service/user/account/tickets/messages';
+  static const String ticketDetail = 'service/user/account/tickets/detail';
 }
