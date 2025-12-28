@@ -48,14 +48,6 @@ class _ProductDetailViewState extends State<ProductDetailView> {
     }
   }
 
-  Future<void> _sendMessage(String phoneNumber) async {
-    final cleanNumber = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
-    final Uri launchUri = Uri(scheme: 'sms', path: cleanNumber);
-    if (await canLaunchUrl(launchUri)) {
-      await launchUrl(launchUri);
-    }
-  }
-
   Future<void> _openMap(double lat, double lng) async {
     final googleMapsUrl = Uri.parse(
       "https://www.google.com/maps/search/?api=1&query=$lat,$lng",
@@ -756,17 +748,7 @@ class _ProductDetailViewState extends State<ProductDetailView> {
             ],
             Expanded(
               child: ElevatedButton.icon(
-                onPressed: () {
-                  if (showCallButton) {
-                    _sendMessage(product.userPhone!);
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Kullanıcı mesajlaşmaya kapalı'),
-                      ),
-                    );
-                  }
-                },
+                onPressed: () => _showOfferBottomSheet(context, product),
                 icon: const Icon(Icons.message),
                 label: const Text("Mesaj Gönder"),
                 style: ElevatedButton.styleFrom(
@@ -783,6 +765,409 @@ class _ProductDetailViewState extends State<ProductDetailView> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showOfferBottomSheet(BuildContext context, ProductDetail product) {
+    final authViewModel = context.read<AuthViewModel>();
+    final userToken = authViewModel.user?.token;
+    final myUserId = authViewModel.user?.userID;
+
+    if (userToken == null || myUserId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Mesaj göndermek için giriş yapmalısınız'),
+        ),
+      );
+      return;
+    }
+
+    if (product.userID == myUserId) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Kendi ilanınıza mesaj gönderemezsiniz')),
+      );
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          height: MediaQuery.of(context).size.height * 0.85,
+          child: MultiProvider(
+            providers: [
+              ChangeNotifierProvider(
+                create: (_) =>
+                    ProfileViewModel()..getProfileDetail(myUserId, userToken),
+              ),
+              ChangeNotifierProvider(create: (_) => TicketViewModel()),
+            ],
+            child: _OfferSheetContent(
+              targetProduct: product,
+              userToken: userToken,
+              myUserId: myUserId,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _OfferSheetContent extends StatefulWidget {
+  final ProductDetail targetProduct;
+  final String userToken;
+  final int myUserId;
+
+  const _OfferSheetContent({
+    super.key,
+    required this.targetProduct,
+    required this.userToken,
+    required this.myUserId,
+  });
+
+  @override
+  State<_OfferSheetContent> createState() => _OfferSheetContentState();
+}
+
+class _OfferSheetContentState extends State<_OfferSheetContent> {
+  int? _selectedProductId;
+  final TextEditingController _messageController = TextEditingController(
+    text: "Selam canım",
+  );
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Handle
+        Container(
+          height: 5,
+          width: 40,
+          margin: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.grey[300],
+            borderRadius: BorderRadius.circular(2.5),
+          ),
+        ),
+
+        // Header
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Teklif Oluştur',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+        ),
+
+        const Divider(),
+
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Target Product Info
+                Row(
+                  children: [
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        image: widget.targetProduct.productImage != null
+                            ? DecorationImage(
+                                image: NetworkImage(
+                                  widget.targetProduct.productImage!,
+                                ),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                        color: Colors.grey[200],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.targetProduct.productTitle ?? '',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            'İlan Sahibi: ${widget.targetProduct.userFullname ?? ''}',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                const Text(
+                  'Takas Etmek İstediğiniz Ürününüz',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                ),
+                const SizedBox(height: 12),
+
+                // My Products List
+                Consumer<ProfileViewModel>(
+                  builder: (context, viewModel, _) {
+                    if (viewModel.state == ProfileState.busy) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (viewModel.state == ProfileState.error) {
+                      return Text(
+                        'Ürünler yüklenemedi: ${viewModel.errorMessage}',
+                      );
+                    }
+
+                    final products = viewModel.profileDetail?.products ?? [];
+                    if (products.isEmpty) {
+                      return Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            'Takas teklif edecek aktif ilanınız bulunmuyor.',
+                          ),
+                        ),
+                      );
+                    }
+
+                    return SizedBox(
+                      height: 140,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: products.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 12),
+                        itemBuilder: (context, index) {
+                          final product = products[index];
+                          final isSelected =
+                              _selectedProductId == product.productID;
+
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _selectedProductId = product.productID;
+                              });
+                            },
+                            child: Container(
+                              width: 100,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? AppTheme.primary
+                                      : Colors.grey.withOpacity(0.3),
+                                  width: isSelected ? 2 : 1,
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius:
+                                            const BorderRadius.vertical(
+                                              top: Radius.circular(7),
+                                            ),
+                                        image: product.productImage != null
+                                            ? DecorationImage(
+                                                image: NetworkImage(
+                                                  product.productImage!,
+                                                ),
+                                                fit: BoxFit.cover,
+                                              )
+                                            : null,
+                                        color: Colors.grey[200],
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      product.productTitle ?? '',
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 11),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 24),
+
+                const Text(
+                  'Mesajınız',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _messageController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    hintText: 'Bir mesaj yazın...',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                Consumer<TicketViewModel>(
+                  builder: (context, ticketViewModel, child) {
+                    return SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed:
+                            ticketViewModel.isSendingMessage ||
+                                _selectedProductId == null
+                            ? null
+                            : () async {
+                                if (widget.targetProduct.productID == null)
+                                  return;
+
+                                final result = await ticketViewModel
+                                    .createTicket(
+                                      widget.userToken,
+                                      widget.targetProduct.productID!,
+                                      _selectedProductId!,
+                                      _messageController.text,
+                                    );
+
+                                if (!context.mounted) return;
+
+                                if (result != null) {
+                                  Navigator.pop(context); // Close sheet
+
+                                  // Create minimal ticket for navigation
+                                  final ticket = Ticket(
+                                    ticketID: result,
+                                    productID: widget.targetProduct.productID,
+                                    productTitle:
+                                        widget.targetProduct.productTitle,
+                                    productImage:
+                                        widget.targetProduct.productImage,
+                                    otherUserID: widget.targetProduct.userID,
+                                    otherFullname:
+                                        widget.targetProduct.userFullname,
+                                    otherProfilePhoto:
+                                        widget.targetProduct.profilePhoto,
+                                  );
+
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          ChatView(ticket: ticket),
+                                    ),
+                                  );
+
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Teklif başarıyla gönderildi',
+                                      ),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        ticketViewModel.errorMessage ??
+                                            'Hata oluştu',
+                                      ),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          disabledBackgroundColor: Colors.grey[300],
+                        ),
+                        child: ticketViewModel.isSendingMessage
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                'Teklifi Gönder',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
