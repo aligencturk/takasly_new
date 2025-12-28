@@ -9,9 +9,9 @@ import 'favorites_view.dart';
 import 'my_ads_view.dart';
 import 'my_trades_view.dart';
 import 'profile_edit_view.dart';
-import 'change_password_view.dart';
-import 'settings_view.dart';
-import 'contact_view.dart';
+import '../settings/change_password_view.dart';
+import '../settings/settings_view.dart';
+import '../settings/contact_view.dart';
 
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});

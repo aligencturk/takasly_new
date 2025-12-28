@@ -21,6 +21,8 @@ import '../profile/profile_view.dart';
 import '../profile/my_trades_view.dart';
 import '../messages/tickets_view.dart';
 
+import 'package:permission_handler/permission_handler.dart';
+
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
 
@@ -36,6 +38,7 @@ class _HomeViewState extends State<HomeView> {
   @override
   void initState() {
     super.initState();
+    _requestNotificationPermissions();
     _scrollController.addListener(_onScroll);
     // Fetch Data
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -44,6 +47,10 @@ class _HomeViewState extends State<HomeView> {
       // We removed the unconditional init() here to prevent guest-mode fetch race condition.
       // context.read<ProductViewModel>().init();
     });
+  }
+
+  Future<void> _requestNotificationPermissions() async {
+    await Permission.notification.request();
   }
 
   bool _isInitDone = false;
