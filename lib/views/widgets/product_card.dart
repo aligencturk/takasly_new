@@ -23,18 +23,9 @@ class ProductCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(5), // Radius 10
-          border: Border.all(
-            color: Colors.grey.withOpacity(0.4),
-          ), // Border opacity 0.3
-          // Slight shadow like the image
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 5,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          borderRadius: AppTheme.borderRadius,
+          border: Border.all(color: Colors.grey.withOpacity(0.15)),
+          boxShadow: AppTheme.cardShadow,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,14 +37,15 @@ class ProductCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     border: Border(
                       bottom: BorderSide(
-                        color: Colors.grey.withOpacity(0.2),
+                        color: Colors.grey.withOpacity(0.1),
                         width: 1,
                       ),
                     ),
                   ),
                   child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(5), // Radius 10
+                    borderRadius: BorderRadius.only(
+                      topLeft: AppTheme.borderRadius.topLeft,
+                      topRight: AppTheme.borderRadius.topRight,
                     ),
                     child: AspectRatio(
                       aspectRatio: 1.0, // Square image

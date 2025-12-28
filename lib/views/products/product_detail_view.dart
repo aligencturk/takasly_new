@@ -12,8 +12,11 @@ import '../../models/product_detail_model.dart';
 import '../../viewmodels/profile_viewmodel.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/ticket_viewmodel.dart';
+import '../../models/profile/profile_detail_model.dart';
 import '../profile/user_profile_view.dart';
 import '../messages/chat_view.dart';
+import '../widgets/product_card.dart';
+import '../../models/products/product_models.dart' as prod_models;
 import '../../models/tickets/ticket_model.dart';
 
 class ProductDetailView extends StatefulWidget {
@@ -239,7 +242,7 @@ class _ProductDetailViewState extends State<ProductDetailView> {
                   itemBuilder: (context, index) {
                     return Image.network(
                       images[index],
-                      fit: BoxFit.cover,
+                      fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) =>
                           Container(color: Colors.grey[200]),
                     );
@@ -829,7 +832,6 @@ class _OfferSheetContent extends StatefulWidget {
   final int myUserId;
 
   const _OfferSheetContent({
-    super.key,
     required this.targetProduct,
     required this.userToken,
     required this.myUserId,
@@ -841,9 +843,15 @@ class _OfferSheetContent extends StatefulWidget {
 
 class _OfferSheetContentState extends State<_OfferSheetContent> {
   int? _selectedProductId;
-  final TextEditingController _messageController = TextEditingController(
-    text: "Selam canım",
-  );
+  final TextEditingController _messageController = TextEditingController();
+
+  final List<String> _quickMessages = [
+    "Merhaba, ürün hala satılık mı?",
+    "Takas düşünür müsünüz?",
+    "Teklifim uygun mu?",
+    "Detaylı bilgi alabilir miyim?",
+    "Hangi konumdasınız?",
+  ];
 
   @override
   void dispose() {
@@ -853,321 +861,523 @@ class _OfferSheetContentState extends State<_OfferSheetContent> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Handle
-        Container(
-          height: 5,
-          width: 40,
-          margin: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: Colors.grey[300],
-            borderRadius: BorderRadius.circular(2.5),
-          ),
-        ),
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      child: Container(
+        decoration: const BoxDecoration(color: AppTheme.background),
+        child: Column(
+          children: [
+            // Header
+            _buildHeader(context),
 
-        // Header
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Teklif Oluştur',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 24,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Target Product Card (Trade Summary)
+                    _buildSectionTitle("İlgilendiğiniz Ürün"),
+                    const SizedBox(height: 12),
+                    _buildTargetProductCard(),
+
+                    const SizedBox(height: 32),
+
+                    // My Products Section
+                    _buildSectionTitle("Takas İçin Ürününüzü Seçin"),
+                    const SizedBox(height: 16),
+                    _buildMyProductsList(),
+
+                    const SizedBox(height: 32),
+
+                    // Message Section
+                    _buildSectionTitle("Mesajınız"),
+                    const SizedBox(height: 16),
+                    _buildQuickReplies(),
+                    const SizedBox(height: 12),
+                    _buildMessageInputField(),
+
+                    const SizedBox(height: 40),
+
+                    // Send Button
+                    _buildSendButton(context),
+                    const SizedBox(height: 16),
+                  ],
+                ),
               ),
-              IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
+      ),
+    );
+  }
 
-        const Divider(),
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        color: AppTheme.primary,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildHandle(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 0, 8, 16),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Text(
+                  'Teklif Gönder',
+                  textAlign: TextAlign.center,
+                  style: AppTheme.safePoppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: IconButton(
+                    icon: const Icon(Icons.close_rounded, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+  Widget _buildHandle() {
+    return Container(
+      height: 4,
+      width: 40,
+      margin: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(2),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: AppTheme.safePoppins(
+        fontSize: 15,
+        fontWeight: FontWeight.w600,
+        color: AppTheme.textPrimary,
+      ),
+    );
+  }
+
+  prod_models.Product _mapToProduct(dynamic item) {
+    if (item is ProfileProduct) {
+      return prod_models.Product(
+        productID: item.productID,
+        productTitle: item.productTitle,
+        productImage: item.productImage,
+        productCondition: item.productCondition,
+        cityTitle: item.cityTitle,
+        districtTitle: item.districtTitle,
+        categoryList: item.categoryList
+            ?.map(
+              (e) => prod_models.Category(catID: e.catID, catName: e.catName),
+            )
+            .toList(),
+        isFavorite: item.isFavorite,
+      );
+    } else if (item is ProductDetail) {
+      return prod_models.Product(
+        productID: item.productID,
+        productTitle: item.productTitle,
+        productImage: item.productImage,
+        productCondition: item.productCondition,
+        cityTitle: item.cityTitle,
+        districtTitle: item.districtTitle,
+        categoryList: item.categoryList
+            ?.map(
+              (e) => prod_models.Category(catID: e.catID, catName: e.catName),
+            )
+            .toList(),
+        isFavorite: item.isFavorite,
+        userID: item.userID,
+        userFullname: item.userFullname,
+      );
+    }
+    return prod_models.Product();
+  }
+
+  Widget _buildTargetProductCard() {
+    final product = _mapToProduct(widget.targetProduct);
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: AppTheme.borderRadius,
+        border: Border.all(color: Colors.grey.withOpacity(0.15)),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: product.productImage != null
+                ? Image.network(
+                    product.productImage!,
+                    width: 70,
+                    height: 70,
+                    fit: BoxFit.cover,
+                  )
+                : Container(
+                    width: 70,
+                    height: 70,
+                    color: Colors.grey[100],
+                    child: const Icon(
+                      Icons.image_not_supported,
+                      color: Colors.grey,
+                    ),
+                  ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Target Product Info
+                Text(
+                  product.categoryTitle ?? 'Kategori',
+                  style: AppTheme.safePoppins(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.primary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  product.productTitle ?? '',
+                  style: AppTheme.safePoppins(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textPrimary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
                 Row(
                   children: [
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        image: widget.targetProduct.productImage != null
-                            ? DecorationImage(
-                                image: NetworkImage(
-                                  widget.targetProduct.productImage!,
-                                ),
-                                fit: BoxFit.cover,
-                              )
-                            : null,
-                        color: Colors.grey[200],
-                      ),
+                    const Icon(
+                      Icons.location_on_outlined,
+                      size: 12,
+                      color: AppTheme.textSecondary,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.targetProduct.productTitle ?? '',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            'İlan Sahibi: ${widget.targetProduct.userFullname ?? ''}',
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
+                    const SizedBox(width: 4),
+                    Text(
+                      '${product.cityTitle?.toUpperCase() ?? ''} / ${product.districtTitle?.toUpperCase() ?? ''}',
+                      style: AppTheme.safePoppins(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: AppTheme.textSecondary,
                       ),
                     ),
                   ],
                 ),
-
-                const SizedBox(height: 24),
-
-                const Text(
-                  'Takas Etmek İstediğiniz Ürününüz',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-                ),
-                const SizedBox(height: 12),
-
-                // My Products List
-                Consumer<ProfileViewModel>(
-                  builder: (context, viewModel, _) {
-                    if (viewModel.state == ProfileState.busy) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (viewModel.state == ProfileState.error) {
-                      return Text(
-                        'Ürünler yüklenemedi: ${viewModel.errorMessage}',
-                      );
-                    }
-
-                    final products = viewModel.profileDetail?.products ?? [];
-                    if (products.isEmpty) {
-                      return Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Center(
-                          child: Text(
-                            'Takas teklif edecek aktif ilanınız bulunmuyor.',
-                          ),
-                        ),
-                      );
-                    }
-
-                    return SizedBox(
-                      height: 140,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: products.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 12),
-                        itemBuilder: (context, index) {
-                          final product = products[index];
-                          final isSelected =
-                              _selectedProductId == product.productID;
-
-                          return GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _selectedProductId = product.productID;
-                              });
-                            },
-                            child: Container(
-                              width: 100,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? AppTheme.primary
-                                      : Colors.grey.withOpacity(0.3),
-                                  width: isSelected ? 2 : 1,
-                                ),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        borderRadius:
-                                            const BorderRadius.vertical(
-                                              top: Radius.circular(7),
-                                            ),
-                                        image: product.productImage != null
-                                            ? DecorationImage(
-                                                image: NetworkImage(
-                                                  product.productImage!,
-                                                ),
-                                                fit: BoxFit.cover,
-                                              )
-                                            : null,
-                                        color: Colors.grey[200],
-                                      ),
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Text(
-                                      product.productTitle ?? '',
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontSize: 11),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  },
-                ),
-
-                const SizedBox(height: 24),
-
-                const Text(
-                  'Mesajınız',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _messageController,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    hintText: 'Bir mesaj yazın...',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                Consumer<TicketViewModel>(
-                  builder: (context, ticketViewModel, child) {
-                    return SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed:
-                            ticketViewModel.isSendingMessage ||
-                                _selectedProductId == null
-                            ? null
-                            : () async {
-                                if (widget.targetProduct.productID == null)
-                                  return;
-
-                                final result = await ticketViewModel
-                                    .createTicket(
-                                      widget.userToken,
-                                      widget.targetProduct.productID!,
-                                      _selectedProductId!,
-                                      _messageController.text,
-                                    );
-
-                                if (!context.mounted) return;
-
-                                if (result != null) {
-                                  Navigator.pop(context); // Close sheet
-
-                                  // Create minimal ticket for navigation
-                                  final ticket = Ticket(
-                                    ticketID: result,
-                                    productID: widget.targetProduct.productID,
-                                    productTitle:
-                                        widget.targetProduct.productTitle,
-                                    productImage:
-                                        widget.targetProduct.productImage,
-                                    otherUserID: widget.targetProduct.userID,
-                                    otherFullname:
-                                        widget.targetProduct.userFullname,
-                                    otherProfilePhoto:
-                                        widget.targetProduct.profilePhoto,
-                                  );
-
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          ChatView(ticket: ticket),
-                                    ),
-                                  );
-
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Teklif başarıyla gönderildi',
-                                      ),
-                                      backgroundColor: Colors.green,
-                                    ),
-                                  );
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        ticketViewModel.errorMessage ??
-                                            'Hata oluştu',
-                                      ),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                }
-                              },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          disabledBackgroundColor: Colors.grey[300],
-                        ),
-                        child: ticketViewModel.isSendingMessage
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Text(
-                                'Teklifi Gönder',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 24),
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMyProductsList() {
+    return Consumer<ProfileViewModel>(
+      builder: (context, viewModel, _) {
+        if (viewModel.state == ProfileState.busy) {
+          return const SizedBox(
+            height: 160,
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          );
+        }
+        if (viewModel.state == ProfileState.error) {
+          return Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.error.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              'Ürünler yüklenemedi: ${viewModel.errorMessage}',
+              style: TextStyle(color: AppTheme.error, fontSize: 13),
+            ),
+          );
+        }
+
+        final products = viewModel.profileDetail?.products ?? [];
+        if (products.isEmpty) {
+          return Container(
+            padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+            decoration: BoxDecoration(
+              color: AppTheme.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.grey.withOpacity(0.1)),
+            ),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.inventory_2_outlined,
+                  size: 40,
+                  color: Colors.grey.withOpacity(0.4),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Takas teklif edecek aktif bir ürününüz bulunmuyor.',
+                  textAlign: TextAlign.center,
+                  style: AppTheme.safePoppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return SizedBox(
+          height: 230,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            itemCount: products.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 16),
+            itemBuilder: (context, index) {
+              final profileProduct = products[index];
+              final product = _mapToProduct(profileProduct);
+              final isSelected = _selectedProductId == product.productID;
+
+              return Stack(
+                children: [
+                  SizedBox(
+                    width: 150,
+                    child: ProductCard(
+                      product: product,
+                      onTap: () {
+                        setState(() {
+                          _selectedProductId = product.productID;
+                        });
+                      },
+                    ),
+                  ),
+                  if (isSelected)
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: AppTheme.borderRadius,
+                            border: Border.all(
+                              color: AppTheme.primary,
+                              width: 3,
+                            ),
+                            color: AppTheme.primary.withOpacity(0.05),
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (isSelected)
+                    Positioned(
+                      top: 12,
+                      left: 12,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: AppTheme.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.check,
+                          size: 16,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildQuickReplies() {
+    return SizedBox(
+      height: 38,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: _quickMessages.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        itemBuilder: (context, index) {
+          return InkWell(
+            onTap: () => _messageController.text = _quickMessages[index],
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AppTheme.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.grey.withOpacity(0.15)),
+              ),
+              child: Text(
+                _quickMessages[index],
+                style: AppTheme.safePoppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: AppTheme.textSecondary,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildMessageInputField() {
+    return TextField(
+      controller: _messageController,
+      maxLines: 4,
+      style: AppTheme.safePoppins(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        color: AppTheme.textPrimary,
+      ),
+      decoration: InputDecoration(
+        hintText: 'Satıcıya bir mesaj yazın...',
+        hintStyle: TextStyle(color: Colors.grey.withOpacity(0.5)),
+        filled: true,
+        fillColor: AppTheme.surface,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.grey.withOpacity(0.1)),
         ),
-      ],
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.grey.withOpacity(0.1)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
+        ),
+        contentPadding: const EdgeInsets.all(16),
+      ),
+    );
+  }
+
+  Widget _buildSendButton(BuildContext context) {
+    return Consumer<TicketViewModel>(
+      builder: (context, ticketViewModel, child) {
+        final bool canSend =
+            _selectedProductId != null && !ticketViewModel.isSendingMessage;
+
+        return SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: ElevatedButton(
+            onPressed: canSend
+                ? () async {
+                    if (widget.targetProduct.productID == null) return;
+
+                    final result = await ticketViewModel.createTicket(
+                      widget.userToken,
+                      widget.targetProduct.productID!,
+                      _selectedProductId!,
+                      _messageController.text.trim().isEmpty
+                          ? "Merhaba, bu ilan için bir takas teklifim var."
+                          : _messageController.text,
+                    );
+
+                    if (!context.mounted) return;
+
+                    if (result != null) {
+                      Navigator.pop(context);
+
+                      final ticket = Ticket(
+                        ticketID: result,
+                        productID: widget.targetProduct.productID,
+                        productTitle: widget.targetProduct.productTitle,
+                        productImage: widget.targetProduct.productImage,
+                        otherUserID: widget.targetProduct.userID,
+                        otherFullname: widget.targetProduct.userFullname,
+                        otherProfilePhoto: widget.targetProduct.profilePhoto,
+                      );
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ChatView(ticket: ticket),
+                        ),
+                      );
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Teklif başarıyla gönderildi'),
+                          backgroundColor: AppTheme.success,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            ticketViewModel.errorMessage ?? 'Hata oluştu',
+                          ),
+                          backgroundColor: AppTheme.error,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  }
+                : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primary,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              disabledBackgroundColor: Colors.grey[300],
+            ),
+            child: ticketViewModel.isSendingMessage
+                ? const SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Text(
+                    'Teklifi Gönder',
+                    style: AppTheme.safePoppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+          ),
+        );
+      },
     );
   }
 }
