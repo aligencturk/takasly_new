@@ -70,34 +70,41 @@ class _SearchViewState extends State<SearchView> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(
-                    children: [
-                      // Back Button
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(14),
+                  SizedBox(
+                    height: 44,
+                    width: double.infinity,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Back Button
+                        Positioned(
+                          left: 0,
+                          child: GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: const Icon(
+                                Icons.arrow_back_ios_new_rounded,
+                                size: 18,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
-                          child: const Icon(
-                            Icons.arrow_back_ios_new_rounded,
-                            size: 18,
+                        ),
+                        Text(
+                          'Ürün Ara',
+                          style: AppTheme.safePoppins(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
                             color: Colors.white,
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      Text(
-                        'Ürün Ara',
-                        style: AppTheme.safePoppins(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 20),
                   Row(
@@ -210,106 +217,104 @@ class _SearchViewState extends State<SearchView> {
         ),
       ),
       body: Consumer<SearchViewModel>(
-          builder: (context, viewModel, child) {
-            if (viewModel.isLoading && viewModel.products.isEmpty) {
-              return const Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primary),
-                ),
-              );
-            }
+        builder: (context, viewModel, child) {
+          if (viewModel.isLoading && viewModel.products.isEmpty) {
+            return const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primary),
+              ),
+            );
+          }
 
-            if (viewModel.errorMessage != null) {
+          if (viewModel.errorMessage != null) {
+            return _buildEmptyState(
+              icon: Icons.error_outline_rounded,
+              title: "Bir Sorun Oluştu",
+              subtitle: viewModel.errorMessage!,
+              color: Colors.redAccent,
+            );
+          }
+
+          if (viewModel.products.isEmpty) {
+            if (_searchController.text.isEmpty) {
               return _buildEmptyState(
-                icon: Icons.error_outline_rounded,
-                title: "Bir Sorun Oluştu",
-                subtitle: viewModel.errorMessage!,
-                color: Colors.redAccent,
+                icon: Icons.manage_search_rounded,
+                title: "Keşfetmeye Hazır mısın?",
+                subtitle: "Aradığın her şeyi burada bulabilirsin.",
               );
             }
 
-            if (viewModel.products.isEmpty) {
-              if (_searchController.text.isEmpty) {
-                return _buildEmptyState(
-                  icon: Icons.manage_search_rounded,
-                  title: "Keşfetmeye Hazır mısın?",
-                  subtitle: "Aradığın her şeyi burada bulabilirsin.",
-                );
-              }
+            return _buildEmptyState(
+              icon: Icons.search_off_rounded,
+              title: "Sonuç Bulunamadı",
+              subtitle:
+                  "'${_searchController.text}' için uygun sonuç bulamadık.",
+            );
+          }
 
-              return _buildEmptyState(
-                icon: Icons.search_off_rounded,
-                title: "Sonuç Bulunamadı",
-                subtitle:
-                    "'${_searchController.text}' için uygun sonuç bulamadık.",
-              );
-            }
-
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-                  child: Text(
-                    "${viewModel.products.length} Sonuç Bulundu",
-                    style: AppTheme.safePoppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textPrimary,
-                    ),
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+                child: Text(
+                  "${viewModel.products.length} Sonuç Bulundu",
+                  style: AppTheme.safePoppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
                   ),
                 ),
-                Expanded(
-                  child: GridView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
-                    ),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 0.65, // Adjust for card height
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                        ),
-                    itemCount:
-                        viewModel.products.length +
-                        (viewModel.isLoadMoreRunning ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (index == viewModel.products.length) {
-                        return const Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        );
-                      }
+              ),
+              Expanded(
+                child: GridView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.65, // Adjust for card height
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                  ),
+                  itemCount:
+                      viewModel.products.length +
+                      (viewModel.isLoadMoreRunning ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index == viewModel.products.length) {
+                      return const Center(
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      );
+                    }
 
-                      final product = viewModel.products[index];
-                      return ProductCard(
-                        product: product,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ChangeNotifierProvider(
-                                create: (_) => ProductDetailViewModel(),
-                                child: ProductDetailView(
-                                  productId: product.productID!,
-                                ),
+                    final product = viewModel.products[index];
+                    return ProductCard(
+                      product: product,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ChangeNotifierProvider(
+                              create: (_) => ProductDetailViewModel(),
+                              child: ProductDetailView(
+                                productId: product.productID!,
                               ),
                             ),
-                          );
-                        },
-                        onFavoritePressed: () {
-                          // Optional: Implement favorite logic here if needed
-                        },
-                      );
-                    },
-                  ),
+                          ),
+                        );
+                      },
+                      onFavoritePressed: () {
+                        // Optional: Implement favorite logic here if needed
+                      },
+                    );
+                  },
                 ),
-              ],
-            );
-          },
-        ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
