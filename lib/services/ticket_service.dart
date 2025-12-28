@@ -44,4 +44,25 @@ class TicketService {
       rethrow;
     }
   }
+
+  Future<bool> sendMessage(
+    String userToken,
+    int ticketID,
+    String message,
+  ) async {
+    try {
+      final response = await _apiService.post(ApiConstants.addMessage, {
+        'userToken': userToken,
+        'ticketID': ticketID,
+        'message': message,
+      });
+
+      print('Send Message Response: $response'); // Debug logging
+      final success = response['success'];
+      return success == 1 || success == '1' || success == true;
+    } catch (e) {
+      print('Error sending message: $e');
+      return false;
+    }
+  }
 }

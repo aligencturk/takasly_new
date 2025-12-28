@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:takasly/viewmodels/ticket_viewmodel.dart';
@@ -30,6 +31,29 @@ class _ChatViewState extends State<ChatView> {
       _fetchMessages(isRefresh: true);
       _fetchTicketDetail();
     });
+    _startPolling();
+  }
+
+  Timer? _pollingTimer;
+
+  void _startPolling() {
+    _pollingTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      final authVM = context.read<AuthViewModel>();
+      if (authVM.user?.token != null && widget.ticket.ticketID != null) {
+        // Silent refresh to avoid loading spinner
+        context.read<TicketViewModel>().fetchMessages(
+          widget.ticket.ticketID!,
+          authVM.user!.token,
+          isRefresh: true,
+          isSilent: true,
+        );
+      }
+    });
+  }
+
+  void _stopPolling() {
+    _pollingTimer?.cancel();
+    _pollingTimer = null;
   }
 
   void _fetchMessages({bool isRefresh = false}) {
@@ -69,6 +93,7 @@ class _ChatViewState extends State<ChatView> {
 
   @override
   void dispose() {
+    _stopPolling();
     _scrollController.dispose();
     _messageController.dispose();
     super.dispose();
@@ -486,7 +511,7 @@ class _ChatViewState extends State<ChatView> {
                                           fontWeight: FontWeight.normal,
                                           color: isMine
                                               ? AppTheme.surface.withOpacity(
-                                                  0.7,
+                                                  0.9,
                                                 )
                                               : AppTheme.textSecondary,
                                         ),
@@ -495,10 +520,10 @@ class _ChatViewState extends State<ChatView> {
                                         const SizedBox(width: 4),
                                         Icon(
                                           Icons.done_all_rounded,
-                                          size: 14,
+                                          size: 15,
                                           color: message.isRead == true
                                               ? Colors.greenAccent
-                                              : Colors.white.withOpacity(0.5),
+                                              : Colors.white,
                                         ),
                                       ],
                                     ],
@@ -563,27 +588,64 @@ class _ChatViewState extends State<ChatView> {
               ),
             ),
             const SizedBox(width: 12),
-            GestureDetector(
-              onTap: () {
-                // Implement Send Message Logic Later
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Mesaj gönderme henüz aktif değil."),
+            Consumer<TicketViewModel>(
+              builder: (context, viewModel, child) {
+                return GestureDetector(
+                  onTap: viewModel.isSendingMessage
+                      ? null
+                      : () async {
+                          final message = _messageController.text.trim();
+                          if (message.isEmpty) return;
+
+                          final authVM = context.read<AuthViewModel>();
+                          if (authVM.user?.token == null) return;
+
+                          final success = await viewModel.sendMessage(
+                            widget.ticket.ticketID!,
+                            authVM.user!.token,
+                            message,
+                          );
+
+                          if (success) {
+                            _messageController.clear();
+                          } else {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  viewModel.messageErrorMessage ??
+                                      "Mesaj gönderilemedi.",
+                                ),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: viewModel.isSendingMessage
+                          ? Colors.grey
+                          : AppTheme.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: viewModel.isSendingMessage
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.send,
+                            color: AppTheme.surface,
+                            size: 20,
+                          ),
                   ),
                 );
               },
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: const BoxDecoration(
-                  color: AppTheme.primary,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.send,
-                  color: AppTheme.surface,
-                  size: 20,
-                ),
-              ),
             ),
           ],
         ),

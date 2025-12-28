@@ -57,4 +57,5 @@ class ApiConstants {
   static const String userTickets = 'service/user/account/tickets/list';
   static const String ticketMessages = 'service/user/account/tickets/messages';
   static const String ticketDetail = 'service/user/account/tickets/detail';
+  static const String addMessage = 'service/user/account/tickets/addMessage';
 }

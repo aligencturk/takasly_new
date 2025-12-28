@@ -103,17 +103,23 @@ class TicketViewModel extends ChangeNotifier {
     int ticketID,
     String userToken, {
     bool isRefresh = false,
+    bool isSilent = false,
   }) async {
     if (isMessageLoading) return;
     if (isMessageLastPage && !isRefresh) return;
 
     if (isRefresh) {
-      isMessageLoading = true;
+      if (!isSilent) {
+        isMessageLoading = true;
+        notifyListeners();
+      }
       isMessageLastPage = false;
       currentMessagePage = 1;
       messageErrorMessage = null;
-      messages.clear();
-      notifyListeners();
+      // Do not clear messages immediately if silent, to avoid flicker
+      if (!isSilent) {
+        messages.clear();
+      }
     } else {
       isMessageLoading = true;
       notifyListeners();
@@ -164,8 +170,10 @@ class TicketViewModel extends ChangeNotifier {
         _logger.e("Mesaj Hata", error: e);
       }
     } finally {
-      isMessageLoading = false;
-      notifyListeners();
+      if (!isSilent) {
+        isMessageLoading = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -189,6 +197,46 @@ class TicketViewModel extends ChangeNotifier {
       _logger.e("Ticket Detail Hata", error: e);
     } finally {
       isDetailLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Send Message State
+  bool isSendingMessage = false;
+
+  Future<bool> sendMessage(
+    int ticketID,
+    String userToken,
+    String message,
+  ) async {
+    if (isSendingMessage) return false;
+
+    isSendingMessage = true;
+    notifyListeners();
+
+    try {
+      final success = await _ticketService.sendMessage(
+        userToken,
+        ticketID,
+        message,
+      );
+      if (success) {
+        // Option A: Refresh messages list
+        await fetchMessages(ticketID, userToken, isRefresh: true);
+
+        // Option B: Optimistically append message (Requires creating a TicketMessage object)
+        // For now, refreshing is safer to ensure we get the full server-side object (like ID, timestamp)
+        return true;
+      } else {
+        messageErrorMessage = "Mesaj gönderilemedi.";
+        return false;
+      }
+    } catch (e) {
+      messageErrorMessage = "Mesaj gönderilirken hata: $e";
+      _logger.e("Send Message Error", error: e);
+      return false;
+    } finally {
+      isSendingMessage = false;
       notifyListeners();
     }
   }
