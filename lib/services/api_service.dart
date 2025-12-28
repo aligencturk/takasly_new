@@ -18,7 +18,7 @@ class ApiService {
       lineLength: 80,
       colors: true,
       printEmojis: true,
-      printTime: true,
+      dateTimeFormat: DateTimeFormat.onlyTimeAndSinceStart,
     ),
   );
 
@@ -154,6 +154,47 @@ class ApiService {
       final request = http.Request('DELETE', url);
       request.headers.addAll(_headers);
       request.body = jsonEncode(body);
+
+      final streamedResponse = await _client.send(request);
+      final response = await http.Response.fromStream(streamedResponse);
+
+      _logger.d(
+        'Yanıt Durumu: ${response.statusCode}\nGövde: ${response.body}',
+      );
+      return _handleResponse(response);
+    } on http.ClientException catch (e) {
+      _logger.e('Ağ Hatası (Bağlantı Hatası): $e');
+      throw Exception('Ağ hatası: Lütfen bağlantınızı kontrol edin. $e');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<dynamic> postMultipart(
+    String endpoint, {
+    Map<String, String>? fields,
+    List<http.MultipartFile>? files,
+  }) async {
+    final url = Uri.parse('${ApiConstants.baseUrl}$endpoint');
+    _logger.i(
+      'POST Multipart İsteği: $url\nFields: $fields\nFiles: ${files?.map((e) => e.filename).toList()}',
+    );
+
+    try {
+      final request = http.MultipartRequest('POST', url);
+
+      // Add headers (excluding Content-Type as MultipartRequest sets it automatically)
+      final headers = _headers;
+      headers.remove('Content-Type');
+      request.headers.addAll(headers);
+
+      if (fields != null) {
+        request.fields.addAll(fields);
+      }
+
+      if (files != null) {
+        request.files.addAll(files);
+      }
 
       final streamedResponse = await _client.send(request);
       final response = await http.Response.fromStream(streamedResponse);

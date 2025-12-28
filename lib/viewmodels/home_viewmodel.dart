@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/general_service.dart';
+import '../services/cache_service.dart';
 import '../models/home/home_models.dart';
 import '../models/general_models.dart';
 import 'package:logger/logger.dart';
@@ -8,6 +9,7 @@ import 'package:geocoding/geocoding.dart';
 
 class HomeViewModel extends ChangeNotifier {
   final GeneralService _generalService = GeneralService();
+  final CacheService _cacheService = CacheService();
   final Logger _logger = Logger();
 
   bool _isLoading = false;
@@ -51,16 +53,17 @@ class HomeViewModel extends ChangeNotifier {
   List<Category> _subCategories = [];
   List<Category> get subCategories => _subCategories;
 
-  Future<void> init() async {
+  Future<void> init({bool isRefresh = false}) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
       // 1. Fetch critical metadata in parallel
+      // We pass isRefresh to allow forced category fetching
       await Future.wait([
         fetchLogos(),
-        fetchCategories(),
+        fetchCategories(0, isRefresh),
         fetchCities(),
         fetchConditions(),
       ]);
@@ -69,7 +72,7 @@ class HomeViewModel extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
 
-      // 2. Start location detection in background (doesn't block the UI for categories/logos)
+      // 2. Start location detection in background
       detectUserLocation()
           .then((_) {
             _logger.i('Background location detection complete.');
@@ -171,8 +174,32 @@ class HomeViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> fetchCategories([int parentId = 0]) async {
+  Future<void> fetchCategories([
+    int parentId = 0,
+    bool isRefresh = false,
+  ]) async {
     try {
+      // If it's the root categories (parentId == 0) and not a refresh, try cache first
+      if (parentId == 0 && !isRefresh) {
+        final cached = await _cacheService.getCategories();
+        if (cached != null && cached.isNotEmpty) {
+          _categories = cached;
+          _logger.i('Loaded ${cached.length} categories from cache.');
+          notifyListeners();
+
+          // Check if cache is fresh enough (e.g., < 1 hour)
+          final lastTime = await _cacheService.getCategoriesTime();
+          if (lastTime != null) {
+            final lastDate = DateTime.fromMillisecondsSinceEpoch(lastTime);
+            if (DateTime.now().difference(lastDate) <
+                const Duration(hours: 1)) {
+              _logger.i('Categories cache is fresh (< 1h), skipping API call.');
+              return;
+            }
+          }
+        }
+      }
+
       final response = await _generalService.getCategories(parentId);
       if (response['success'] == true && response['data'] != null) {
         final List cats = response['data']['categories'];
@@ -180,6 +207,8 @@ class HomeViewModel extends ChangeNotifier {
 
         if (parentId == 0) {
           _categories = parsedCats;
+          // Save to cache
+          await _cacheService.saveCategories(parsedCats);
         } else {
           _subCategories = parsedCats;
         }

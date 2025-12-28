@@ -34,4 +34,8 @@ class Category {
       catImage: json['catImage'] ?? '',
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {'catID': catID, 'catName': catName, 'catImage': catImage};
+  }
 }

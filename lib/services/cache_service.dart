@@ -1,0 +1,60 @@
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/home/home_models.dart';
+
+class CacheService {
+  static const String _categoriesKey = 'cached_categories';
+  static const String _categoriesTimeKey = 'cached_categories_time';
+
+  // Cache duration: 24 hours
+  static const Duration _cacheDuration = Duration(hours: 24);
+
+  Future<void> saveCategories(List<Category> categories) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String encoded = jsonEncode(
+        categories.map((c) => c.toJson()).toList(),
+      );
+      await prefs.setString(_categoriesKey, encoded);
+      await prefs.setInt(
+        _categoriesTimeKey,
+        DateTime.now().millisecondsSinceEpoch,
+      );
+    } catch (e) {
+      // Ignore cache saving errors
+    }
+  }
+
+  Future<List<Category>?> getCategories() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? encoded = prefs.getString(_categoriesKey);
+      final int? time = prefs.getInt(_categoriesTimeKey);
+
+      if (encoded == null || time == null) return null;
+
+      // Check if expired (Optional: if we want strict expiration)
+      final DateTime savedTime = DateTime.fromMillisecondsSinceEpoch(time);
+      if (DateTime.now().difference(savedTime) > _cacheDuration) {
+        // We can still return it but maybe mark as stale?
+        // For now let's just return it and let ViewModel decide.
+      }
+
+      final List decoded = jsonDecode(encoded);
+      return decoded.map((e) => Category.fromJson(e)).toList();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<int?> getCategoriesTime() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_categoriesTimeKey);
+  }
+
+  Future<void> clearCache() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_categoriesKey);
+    await prefs.remove(_categoriesTimeKey);
+  }
+}

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:takasly/views/products/product_detail_view.dart';
+import 'package:takasly/views/products/add_product_view.dart';
 import '../../viewmodels/home_viewmodel.dart';
 import '../../viewmodels/product_viewmodel.dart';
 import '../../viewmodels/product_detail_viewmodel.dart';
@@ -107,7 +108,7 @@ class _HomeViewState extends State<HomeView> {
     switch (index) {
       case 0: // Home
         context.read<ProductViewModel>().fetchProducts(isRefresh: true);
-        context.read<HomeViewModel>().init();
+        context.read<HomeViewModel>().init(isRefresh: true);
         if (_scrollController.hasClients) {
           _scrollController.animateTo(
             0,
@@ -161,9 +162,10 @@ class _HomeViewState extends State<HomeView> {
                       builder: (context, homeViewModel, productViewModel, child) {
                         return RefreshIndicator(
                           onRefresh: () async {
-                            await productViewModel.fetchProducts(
-                              isRefresh: true,
-                            );
+                            await Future.wait([
+                              productViewModel.fetchProducts(isRefresh: true),
+                              homeViewModel.init(isRefresh: true),
+                            ]);
                           },
                           color: AppTheme.primary,
                           child: CustomScrollView(
@@ -554,6 +556,13 @@ class _HomeViewState extends State<HomeView> {
       bottomNavigationBar: CustomBottomNavigationBar(
         selectedIndex: _selectedIndex,
         onItemSelected: (index) {
+          if (index == 2) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const AddProductView()),
+            );
+            return;
+          }
           setState(() {
             _selectedIndex = index;
           });

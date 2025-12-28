@@ -5,6 +5,7 @@ import '../models/trade_model.dart';
 import '../models/product_detail_model.dart';
 import '../models/trade_detail_model.dart';
 import '../models/user/report_user_model.dart';
+import '../models/products/add_product_request_model.dart';
 
 class ProductService {
   final ApiService _apiService = ApiService();
@@ -116,6 +117,21 @@ class ProductService {
   Future<void> reportUser(ReportUserRequest request) async {
     try {
       await _apiService.post(ApiConstants.reportUser, request.toJson());
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> addProduct(AddProductRequestModel request, int userId) async {
+    try {
+      final fields = request.toFields();
+      final files = await request.toFiles();
+
+      await _apiService.postMultipart(
+        '${ApiConstants.addProduct}$userId/addProduct',
+        fields: fields,
+        files: files,
+      );
     } catch (e) {
       rethrow;
     }
