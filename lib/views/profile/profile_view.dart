@@ -215,18 +215,7 @@ class _ProfileViewState extends State<ProfileView> {
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
-      title: Text(
-        'Hesabım',
-        style: AppTheme.safePoppins(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: AppTheme.background,
-        ),
-      ),
-      centerTitle: true,
-      backgroundColor: AppTheme.primary,
-      iconTheme: const IconThemeData(color: AppTheme.background),
-      actionsIconTheme: const IconThemeData(color: AppTheme.background),
+      title: const Text('Hesabım'),
       actions: [
         IconButton(
           onPressed: () {
@@ -238,9 +227,6 @@ class _ProfileViewState extends State<ProfileView> {
           icon: const Icon(Icons.settings_outlined),
         ),
       ],
-      elevation: 0,
-      scrolledUnderElevation: 0,
-      systemOverlayStyle: SystemUiOverlayStyle.light,
     );
   }
 

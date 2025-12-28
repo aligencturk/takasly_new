@@ -16,21 +16,7 @@ class SettingsView extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        title: Text(
-          "Ayarlar",
-          style: AppTheme.safePoppins(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: AppTheme.background,
-          ),
-        ),
-        backgroundColor: AppTheme.primary,
-        iconTheme: const IconThemeData(color: AppTheme.background),
-        elevation: 0,
-        centerTitle: true,
-        systemOverlayStyle: SystemUiOverlayStyle.light,
-      ),
+      appBar: AppBar(title: const Text("Ayarlar")),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
         child: Column(

@@ -43,19 +43,7 @@ class _MyAdsViewState extends State<MyAdsView> {
 
         return Scaffold(
           backgroundColor: AppTheme.background,
-          appBar: AppBar(
-            title: Text(
-              'İlanlarım',
-              style: AppTheme.safePoppins(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-            backgroundColor: AppTheme.primary,
-            iconTheme: const IconThemeData(color: Colors.white),
-            centerTitle: true,
-          ),
+          appBar: AppBar(title: const Text('İlanlarım')),
           body: isBusy
               ? const Center(child: CircularProgressIndicator())
               : isError

@@ -58,23 +58,9 @@ class _FavoritesViewContentState extends State<_FavoritesViewContent> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        backgroundColor: AppTheme.primary,
-        title: Text(
-          'Favorilerim',
-          style: AppTheme.safePoppins(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: AppTheme.background,
-          ),
-        ),
-        centerTitle: true,
-        elevation: 0,
-        scrolledUnderElevation: 0,
+        title: const Text('Favorilerim'),
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new,
-            color: AppTheme.background,
-          ),
+          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
