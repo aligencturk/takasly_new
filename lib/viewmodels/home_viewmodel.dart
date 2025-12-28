@@ -57,6 +57,7 @@ class HomeViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // 1. Fetch critical metadata in parallel
       await Future.wait([
         fetchLogos(),
         fetchCategories(),
@@ -64,12 +65,21 @@ class HomeViewModel extends ChangeNotifier {
         fetchConditions(),
       ]);
 
-      // Auto-detect location after basic data is loaded
-      await detectUserLocation();
+      // Basic data is ready, stop the main skeleton/loader
+      _isLoading = false;
+      notifyListeners();
+
+      // 2. Start location detection in background (doesn't block the UI for categories/logos)
+      detectUserLocation()
+          .then((_) {
+            _logger.i('Background location detection complete.');
+          })
+          .catchError((e) {
+            _logger.e('Background location detection failed: $e');
+          });
     } catch (e) {
       _errorMessage = e.toString();
       _logger.e('Home init error: $e');
-    } finally {
       _isLoading = false;
       notifyListeners();
     }

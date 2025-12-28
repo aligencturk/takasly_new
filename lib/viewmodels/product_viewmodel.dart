@@ -21,12 +21,25 @@ class ProductViewModel extends ChangeNotifier {
   // Default filter
   ProductRequestModel _currentFilter = ProductRequestModel(page: 1);
 
+  // Track refresh requests to prevent race conditions
+  int _refreshRequestCount = 0;
+
   Future<void> init() async {
-    // Try to get location first
-    await _fetchLocation();
-    // After location is determined (success or fail), fetch products.
-    // fetchProducts uses _currentFilter which _fetchLocation modifies.
-    await fetchProducts(isRefresh: true);
+    // Start fetching products immediately with default/cached filter
+    fetchProducts(isRefresh: true);
+
+    // Background location fetch
+    _fetchLocation().then((_) {
+      // If location was successfully fetched and it changed the sort type or coordinates,
+      // we perform a silent refresh to give user location-specific results.
+      if (_currentFilter.userLat != null &&
+          _currentFilter.userLat!.isNotEmpty) {
+        _logger.i(
+          'Location found, refreshing products for location-based sorting.',
+        );
+        fetchProducts(isRefresh: true);
+      }
+    });
   }
 
   Future<void> _fetchLocation() async {
@@ -75,8 +88,11 @@ class ProductViewModel extends ChangeNotifier {
       return;
     }
 
+    int currentRefreshId = _refreshRequestCount;
     if (isRefresh) {
       _logger.i('İlk ürün getirme/yenileme başlatılıyor.');
+      _refreshRequestCount++;
+      currentRefreshId = _refreshRequestCount;
       isLoading = true;
       isLastPage = false;
       currentPage = 1;
@@ -98,6 +114,12 @@ class ProductViewModel extends ChangeNotifier {
     try {
       _currentFilter.page = currentPage;
       final response = await _productService.getAllProducts(_currentFilter);
+
+      // If a newer refresh has been started, ignore this response
+      if (isRefresh && currentRefreshId != _refreshRequestCount) {
+        _logger.d('Eski bir yenileme isteği cevabı göz ardı ediliyor.');
+        return;
+      }
 
       if (response.success == true && response.data != null) {
         final newProducts = response.data!.products ?? [];
