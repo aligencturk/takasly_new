@@ -226,7 +226,7 @@ class _TradeDetailViewContentState extends State<_TradeDetailViewContent>
               opacity: _fadeAnimation,
               child: _buildUserProductRow(
                 detail.sender,
-                label: "Sizin Ürününüz",
+                label: "Karşı Tarafın Ürünü",
               ),
             ),
           ),
@@ -263,7 +263,7 @@ class _TradeDetailViewContentState extends State<_TradeDetailViewContent>
               opacity: _fadeAnimation,
               child: _buildUserProductRow(
                 detail.receiver,
-                label: "Karşı Tarafın Ürünü",
+                label: "Sizin Ürününüz",
               ),
             ),
           ),
