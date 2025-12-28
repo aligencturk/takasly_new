@@ -17,6 +17,12 @@ class TicketListResponse {
     }
   }
 
+  static String? _fixUrl(String? url) {
+    if (url == null || url.isEmpty) return null;
+    if (url.startsWith('http')) return url;
+    return 'https://takasly.tr/$url';
+  }
+
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['error'] = error;
@@ -83,6 +89,7 @@ class Ticket {
   int? otherUserID;
   String? otherFullname;
   String? otherPhoto;
+  String? otherProfilePhoto;
   String? productTitle;
   String? productImage;
   int? productID;
@@ -99,6 +106,7 @@ class Ticket {
     this.otherUserID,
     this.otherFullname,
     this.otherPhoto,
+    this.otherProfilePhoto,
     this.productTitle,
     this.productImage,
     this.productID,
@@ -115,9 +123,10 @@ class Ticket {
     ticketStatus = json['ticketStatus'];
     otherUserID = json['otherUserID'];
     otherFullname = json['otherFullname'];
-    otherPhoto = json['otherPhoto'];
+    otherPhoto = TicketListResponse._fixUrl(json['otherPhoto']);
+    otherProfilePhoto = TicketListResponse._fixUrl(json['otherProfilePhoto']);
     productTitle = json['productTitle'];
-    productImage = json['productImage'];
+    productImage = TicketListResponse._fixUrl(json['productImage']);
     productID = json['productID'];
     offerID = json['offerID'];
     lastMessage = json['lastMessage'];
@@ -134,6 +143,7 @@ class Ticket {
     data['otherUserID'] = otherUserID;
     data['otherFullname'] = otherFullname;
     data['otherPhoto'] = otherPhoto;
+    data['otherProfilePhoto'] = otherProfilePhoto;
     data['productTitle'] = productTitle;
     data['productImage'] = productImage;
     data['productID'] = productID;
@@ -230,7 +240,7 @@ class TicketMessage {
     messageID = json['messageID'];
     senderUserID = json['senderUserID'];
     senderName = json['senderName'];
-    senderPhoto = json['senderPhoto'];
+    senderPhoto = TicketListResponse._fixUrl(json['senderPhoto']);
     message = json['message'];
     createdAt = json['createdAt'];
     isMine = json['isMine'];
@@ -324,7 +334,7 @@ class TicketProduct {
   int? productID;
   String? productTitle;
   String? productCode;
-  String? productImage; // Assuming this might be available or added later
+  String? productImage;
 
   TicketProduct({
     this.productID,
@@ -337,7 +347,7 @@ class TicketProduct {
     productID = json['productID'];
     productTitle = json['productTitle'];
     productCode = json['productCode'];
-    productImage = json['productImage'];
+    productImage = TicketListResponse._fixUrl(json['productImage']);
   }
 
   Map<String, dynamic> toJson() {

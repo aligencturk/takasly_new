@@ -113,6 +113,7 @@ class _TicketsViewState extends State<TicketsView> {
                 }
 
                 final ticket = viewModel.tickets[index];
+                final userPhoto = ticket.otherProfilePhoto ?? ticket.otherPhoto;
                 return ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: Stack(
@@ -120,10 +121,10 @@ class _TicketsViewState extends State<TicketsView> {
                       CircleAvatar(
                         radius: 25,
                         backgroundColor: AppTheme.primary.withOpacity(0.1),
-                        backgroundImage: ticket.otherPhoto != null
-                            ? NetworkImage(ticket.otherPhoto!)
+                        backgroundImage: userPhoto != null
+                            ? NetworkImage(userPhoto)
                             : null,
-                        child: ticket.otherPhoto == null
+                        child: userPhoto == null
                             ? Text(
                                 ticket.otherFullname != null &&
                                         ticket.otherFullname!.isNotEmpty
