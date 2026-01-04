@@ -277,6 +277,7 @@ class _Step1Content extends StatelessWidget {
             label: 'İlan Başlığı',
             hint: ' Apple iPhone 14 Pro Max (256 GB)',
             textInputAction: TextInputAction.next,
+            autofocus: true,
             onSubmitted: (_) => _openCategoryPicker(context, viewModel),
           ),
           const SizedBox(height: 24),
@@ -1326,6 +1327,7 @@ class _CustomTextField extends StatelessWidget {
   final TextInputAction? textInputAction;
   final void Function(String)? onSubmitted;
   final TextInputType? keyboardType;
+  final bool autofocus;
 
   const _CustomTextField({
     required this.controller,
@@ -1335,6 +1337,7 @@ class _CustomTextField extends StatelessWidget {
     this.textInputAction,
     this.onSubmitted,
     this.keyboardType,
+    this.autofocus = false,
   });
 
   @override
@@ -1388,7 +1391,13 @@ class _CustomTextField extends StatelessWidget {
                     maxLines: maxLines,
                     textInputAction: textInputAction,
                     onSubmitted: onSubmitted,
-                    keyboardType: keyboardType,
+                    autofocus: autofocus,
+                    scrollPadding: const EdgeInsets.only(bottom: 150),
+                    keyboardType:
+                        keyboardType ??
+                        (maxLines > 1
+                            ? TextInputType.multiline
+                            : TextInputType.text),
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
