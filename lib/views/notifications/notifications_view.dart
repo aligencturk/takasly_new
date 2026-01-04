@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
+
 import '../../viewmodels/notification_viewmodel.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../services/navigation_service.dart';

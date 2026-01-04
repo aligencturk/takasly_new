@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../models/account/update_user_model.dart';
 import '../../theme/app_theme.dart';
-import 'package:intl/intl.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
@@ -25,11 +24,32 @@ class _ProfileEditViewState extends State<ProfileEditView> {
 
   String? _birthday; // format: dd.MM.yyyy
   int _gender = 3; // 1- Erkek, 2- Kadın, 3- Belirtilmemiş (Default)
+  int? _selectedDay;
+  int? _selectedMonth;
+  int? _selectedYear;
+
   bool _showContact = true;
 
   File? _pickedImage;
   String? _base64Image;
   final ImagePicker _picker = ImagePicker();
+
+  final List<int> _days = List.generate(31, (index) => index + 1);
+  final List<String> _months = [
+    "Ocak",
+    "Şubat",
+    "Mart",
+    "Nisan",
+    "Mayıs",
+    "Haziran",
+    "Temmuz",
+    "Ağustos",
+    "Eylül",
+    "Ekim",
+    "Kasım",
+    "Aralık",
+  ];
+  final List<int> _years = List.generate(125, (index) => 2024 - index);
 
   @override
   void initState() {
@@ -42,6 +62,16 @@ class _ProfileEditViewState extends State<ProfileEditView> {
 
     // Initialize new fields
     _birthday = user?.userBirthday;
+    if (_birthday != null && _birthday!.isNotEmpty) {
+      try {
+        final parts = _birthday!.split('.');
+        if (parts.length == 3) {
+          _selectedDay = int.tryParse(parts[0]);
+          _selectedMonth = int.tryParse(parts[1]);
+          _selectedYear = int.tryParse(parts[2]);
+        }
+      } catch (_) {}
+    }
 
     // Parse gender string to int
     if (user?.userGender == "Erkek") {
@@ -245,89 +275,31 @@ class _ProfileEditViewState extends State<ProfileEditView> {
                       TextInputType.phone,
                     ),
                     const SizedBox(height: 16),
-                    // Birthday Picker
-                    GestureDetector(
-                      onTap: () async {
-                        DateTime initialDate = DateTime.now();
-                        if (_birthday != null && _birthday!.isNotEmpty) {
-                          try {
-                            initialDate = DateFormat(
-                              "dd.MM.yyyy",
-                            ).parse(_birthday!);
-                          } catch (_) {}
-                        }
-
-                        final DateTime? picked = await showDatePicker(
-                          context: context,
-                          initialDate: initialDate,
-                          firstDate: DateTime(1900),
-                          lastDate: DateTime.now(),
-                          locale: const Locale(
-                            'tr',
-                            'TR',
-                          ), // Ensure Turkish locale if available or default
-                        );
-
-                        if (picked != null) {
-                          setState(() {
-                            _birthday = DateFormat("dd.MM.yyyy").format(picked);
-                          });
-                        }
-                      },
-                      child: AbsorbPointer(
-                        child: TextFormField(
-                          controller: TextEditingController(text: _birthday),
-                          decoration: InputDecoration(
-                            labelText: "Doğum Tarihi",
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            filled: true,
-                            fillColor: Colors.white,
-                            suffixIcon: const Icon(
-                              Icons.calendar_today_rounded,
-                            ),
-                          ),
-                          validator: (value) => null, // Optional
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Gender Dropdown
-                    DropdownButtonFormField<int>(
-                      value: _gender,
-                      decoration: InputDecoration(
-                        labelText: "Cinsiyet",
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
-                      items: const [
-                        DropdownMenuItem(value: 1, child: Text("Erkek")),
-                        DropdownMenuItem(value: 2, child: Text("Kadın")),
-                        DropdownMenuItem(
-                          value: 3,
-                          child: Text("Belirtilmemiş"),
-                        ),
-                      ],
-                      onChanged: (val) {
-                        setState(() {
-                          _gender = val ?? 3;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 16),
+                    // Birthday Selector
+                    _buildBirthdaySelector(),
+                    const SizedBox(height: 24),
+                    // Gender Selector
+                    _buildGenderSection(),
+                    const SizedBox(height: 24),
                     // Show Contact Switch
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade400),
+                        border: Border.all(
+                          color: Colors.grey.shade300,
+                          width: 1.5,
+                        ),
                       ),
                       child: SwitchListTile(
-                        title: const Text("İletişim Bilgisi Görünsün"),
+                        title: Text(
+                          "İletişim Bilgisi Görünsün",
+                          style: AppTheme.safePoppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
                         value: _showContact,
                         onChanged: (bool value) {
                           setState(() {
@@ -337,6 +309,7 @@ class _ProfileEditViewState extends State<ProfileEditView> {
                         activeColor: AppTheme.primary,
                       ),
                     ),
+
                     const SizedBox(height: 32),
                     SizedBox(
                       width: double.infinity,
@@ -371,21 +344,419 @@ class _ProfileEditViewState extends State<ProfileEditView> {
     TextEditingController controller, [
     TextInputType? type,
   ]) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: type,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        filled: true,
-        fillColor: Colors.white,
-      ),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return '$label boş olamaz';
-        }
-        return null;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 6, bottom: 8),
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+              color: Colors.black54,
+            ),
+          ),
+        ),
+        TextFormField(
+          controller: controller,
+          keyboardType: type,
+          style: AppTheme.safePoppins(
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+            color: AppTheme.textPrimary,
+          ),
+          decoration: InputDecoration(
+            hintText: "$label giriniz",
+            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppTheme.primary, width: 2),
+            ),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
+          ),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return '$label boş olamaz';
+            }
+            return null;
+          },
+        ),
+      ],
+    );
+  }
+
+  void _updateBirthday() {
+    if (_selectedDay != null &&
+        _selectedMonth != null &&
+        _selectedYear != null) {
+      final d = _selectedDay!.toString().padLeft(2, '0');
+      final m = _selectedMonth!.toString().padLeft(2, '0');
+      final y = _selectedYear!.toString();
+      _birthday = "$d.$m.$y";
+    }
+  }
+
+  Widget _buildBirthdaySelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(left: 6, bottom: 8),
+          child: Text(
+            "Doğum Tarihi",
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+              color: Colors.black54,
+            ),
+          ),
+        ),
+        Row(
+          children: [
+            // Day
+            Expanded(
+              flex: 2,
+              child: _buildIOSStyleSelector<int>(
+                value: _selectedDay,
+                items: _days,
+                label: "Gün",
+                itemLabel: (val) => val.toString(),
+                onChanged: (val) {
+                  setState(() {
+                    _selectedDay = val;
+                    _updateBirthday();
+                  });
+                  // Auto-open month picker
+                  Future.delayed(const Duration(milliseconds: 300), () {
+                    _openMonthPicker();
+                  });
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Month
+            Expanded(
+              flex: 3,
+              child: _buildIOSStyleSelector<int>(
+                value: _selectedMonth,
+                items: List.generate(12, (i) => i + 1),
+                label: "Ay",
+                itemLabel: (val) => _months[val - 1],
+                onChanged: (val) {
+                  setState(() {
+                    _selectedMonth = val;
+                    _updateBirthday();
+                  });
+                  // Auto-open year picker
+                  Future.delayed(const Duration(milliseconds: 300), () {
+                    _openYearPicker();
+                  });
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Year
+            Expanded(
+              flex: 3,
+              child: _buildIOSStyleSelector<int>(
+                value: _selectedYear,
+                items: _years,
+                label: "Yıl",
+                itemLabel: (val) => val.toString(),
+                onChanged: (val) {
+                  setState(() {
+                    _selectedYear = val;
+                    _updateBirthday();
+                  });
+                },
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // Helper methods for sequential opening
+  void _openMonthPicker() {
+    _showCustomPicker<int>(
+      "Ay Seçiniz",
+      List.generate(12, (i) => i + 1),
+      _selectedMonth,
+      (val) => _months[val - 1],
+      (val) {
+        setState(() {
+          _selectedMonth = val;
+          _updateBirthday();
+        });
+        Future.delayed(const Duration(milliseconds: 300), () {
+          _openYearPicker();
+        });
       },
+    );
+  }
+
+  void _openYearPicker() {
+    _showCustomPicker<int>(
+      "Yıl Seçiniz",
+      _years,
+      _selectedYear,
+      (val) => val.toString(),
+      (val) {
+        setState(() {
+          _selectedYear = val;
+          _updateBirthday();
+        });
+      },
+    );
+  }
+
+  Widget _buildIOSStyleSelector<T>({
+    required T? value,
+    required List<T> items,
+    required String label,
+    required String Function(T) itemLabel,
+    required void Function(T?) onChanged,
+  }) {
+    final bool hasValue = value != null;
+    return GestureDetector(
+      onTap: () => _showCustomPicker(label, items, value, itemLabel, onChanged),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(
+            color: hasValue
+                ? AppTheme.primary.withOpacity(0.5)
+                : Colors.grey.shade300,
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                hasValue ? itemLabel(value as T) : label,
+                style: AppTheme.safePoppins(
+                  fontSize: 13,
+                  fontWeight: hasValue ? FontWeight.w600 : FontWeight.w400,
+                  color: hasValue ? AppTheme.textPrimary : Colors.grey.shade400,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Icon(
+              Icons.expand_more_rounded,
+              color: hasValue ? AppTheme.primary : Colors.grey.shade400,
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCustomPicker<T>(
+    String label,
+    List<T> items,
+    T? value,
+    String Function(T) itemLabel,
+    void Function(T?) onChanged,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.only(top: 12, bottom: 24),
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.5,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Drag Handle
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Header
+              Text(
+                label,
+                style: AppTheme.safePoppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.primary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Divider(height: 1),
+              const SizedBox(height: 8),
+              Expanded(
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: items.length,
+                  separatorBuilder: (context, index) =>
+                      Divider(height: 1, color: Colors.grey.shade100),
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    final isSelected = item == value;
+                    return InkWell(
+                      onTap: () {
+                        onChanged(item);
+                        Navigator.pop(context);
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 18,
+                          horizontal: 12,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            if (isSelected)
+                              const Icon(
+                                Icons.check_circle_rounded,
+                                color: AppTheme.primary,
+                                size: 20,
+                              ),
+                            if (isSelected) const SizedBox(width: 8),
+                            Text(
+                              itemLabel(item),
+                              style: AppTheme.safePoppins(
+                                fontSize: 16,
+                                color: isSelected
+                                    ? AppTheme.primary
+                                    : AppTheme.textPrimary,
+                                fontWeight: isSelected
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildGenderSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(left: 6, bottom: 8),
+          child: Text(
+            "Cinsiyet",
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+              color: Colors.black54,
+            ),
+          ),
+        ),
+        Row(
+          children: [
+            _buildGenderOption(1, "Erkek", Icons.male_rounded),
+            const SizedBox(width: 12),
+            _buildGenderOption(2, "Kadın", Icons.female_rounded),
+            const SizedBox(width: 12),
+            _buildGenderOption(
+              3,
+              "Belirtilmemiş",
+              Icons.remove_circle_outline_rounded,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGenderOption(int value, String label, IconData icon) {
+    bool isSelected = _gender == value;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _gender = value),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? AppTheme.primary : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? AppTheme.primary : Colors.grey.shade300,
+              width: 1.5,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: AppTheme.primary.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Column(
+            children: [
+              Icon(
+                icon,
+                color: isSelected ? Colors.white : Colors.grey.shade600,
+                size: 24,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: AppTheme.safePoppins(
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? Colors.white : Colors.grey.shade600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
