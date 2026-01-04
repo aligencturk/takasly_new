@@ -18,11 +18,21 @@ import 'viewmodels/blocked_users_viewmodel.dart';
 
 import 'theme/app_theme.dart';
 
+import 'services/firebase_messaging_service.dart';
+import 'services/navigation_service.dart';
+
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Set Navigation Key
+  NavigationService.navigatorKey = navigatorKey;
+
+  // Initialize Firebase Messaging Service
+  await FirebaseMessagingService.initialize();
+
   runApp(const MyApp());
 }
 

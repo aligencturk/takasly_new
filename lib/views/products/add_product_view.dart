@@ -1336,6 +1336,7 @@ class _CustomTextField extends StatelessWidget {
     this.maxLines = 1,
     this.textInputAction,
     this.onSubmitted,
+    // ignore: unused_element_parameter
     this.keyboardType,
     this.autofocus = false,
   });

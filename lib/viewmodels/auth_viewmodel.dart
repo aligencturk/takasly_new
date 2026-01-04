@@ -4,21 +4,22 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import '../models/auth/social_login_model.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/auth/social_login_model.dart';
 import '../models/auth/login_model.dart';
 import '../models/auth/register_model.dart';
 import '../models/auth/verification_model.dart';
 import '../models/auth/forgot_password_model.dart';
 import '../models/auth/get_user_model.dart';
 import '../services/auth_service.dart';
-import '../services/account_service.dart'; // Import AccountService
+import '../services/account_service.dart';
 import '../services/api_service.dart';
-import '../models/account/update_user_model.dart'; // Import Account Models
+import '../models/account/update_user_model.dart';
 import '../models/account/change_password_model.dart';
 import '../models/account/delete_user_model.dart';
-import '../main.dart'; // For navigatorKey
+import '../services/firebase_messaging_service.dart';
+import '../services/navigation_service.dart';
 import '../views/auth/login_view.dart';
 
 enum AuthState { idle, busy, error, success }
@@ -500,7 +501,8 @@ class AuthViewModel extends ChangeNotifier {
       final version = packageInfo.version;
 
       // 3. Get FCM Token
-      String? fcmToken;
+      String? fcmToken = await FirebaseMessagingService.getToken();
+
       // On iOS simulators or if APNs not configured, this might be null.
       // We'll use a placeholder if null for dev purposes, but API might require it.
       fcmToken ??= "fcm-token-not-available";
@@ -575,7 +577,7 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
 
     if (autoRedirect) {
-      navigatorKey.currentState?.pushAndRemoveUntil(
+      NavigationService.navigatorKey?.currentState?.pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const LoginView()),
         (route) => false,
       );
