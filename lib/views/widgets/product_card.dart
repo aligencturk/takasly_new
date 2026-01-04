@@ -24,7 +24,12 @@ class ProductCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: AppTheme.borderRadius,
-          border: Border.all(color: Colors.black.withOpacity(0.2)),
+          border: product.isSponsor == true
+              ? Border.all(
+                  color: const Color.fromARGB(255, 255, 215, 0),
+                  width: 2,
+                )
+              : Border.all(color: Colors.black.withOpacity(0.2)),
           boxShadow: AppTheme.cardShadow,
         ),
         child: Column(
