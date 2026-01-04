@@ -74,7 +74,15 @@ class AuthViewModel extends ChangeNotifier {
   Future<void> _checkLoginStatus() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('userToken');
-    final userId = prefs.getInt('userId');
+
+    // Get userID supporting both Int and String storage
+    int? userId;
+    final dynamic rawUserId = prefs.get('userID');
+    if (rawUserId is int) {
+      userId = rawUserId;
+    } else if (rawUserId is String) {
+      userId = int.tryParse(rawUserId);
+    }
 
     if (token != null && userId != null) {
       _user = LoginResponseModel(userID: userId, token: token);
@@ -103,7 +111,7 @@ class AuthViewModel extends ChangeNotifier {
       if (_user != null) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('userToken', _user!.token);
-        await prefs.setInt('userId', _user!.userID);
+        await prefs.setInt('userID', _user!.userID);
       }
 
       _state = AuthState.success;
@@ -256,7 +264,7 @@ class AuthViewModel extends ChangeNotifier {
           // Save session
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('userToken', _user!.token);
-          await prefs.setInt('userId', _user!.userID);
+          await prefs.setInt('userID', _user!.userID);
 
           _logger.i(
             "Verification successful (Register). User logged in: ${_user?.userID}",
@@ -511,7 +519,7 @@ class AuthViewModel extends ChangeNotifier {
       if (_user != null) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('userToken', _user!.token);
-        await prefs.setInt('userId', _user!.userID);
+        await prefs.setInt('userID', _user!.userID);
 
         _state = AuthState.success;
         _logger.i(
@@ -551,7 +559,7 @@ class AuthViewModel extends ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('userToken');
-    await prefs.remove('userId');
+    await prefs.remove('userID');
 
     // Also sign out from social providers
     try {

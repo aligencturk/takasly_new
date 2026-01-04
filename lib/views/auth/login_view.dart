@@ -195,13 +195,7 @@ class _LoginViewState extends State<LoginView> {
 
                             if (context.mounted &&
                                 authViewModel.state == AuthState.success) {
-                              // Navigate to home or show success message
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Giriş Başarılı!'),
-                                ),
-                              );
-                              Navigator.pop(context);
+                              Navigator.pop(context, true);
                             }
                           },
                     style: ElevatedButton.styleFrom(
@@ -261,10 +255,7 @@ class _LoginViewState extends State<LoginView> {
                           await authViewModel.signInWithGoogle();
                           if (context.mounted &&
                               authViewModel.state == AuthState.success) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Giriş Başarılı!')),
-                            );
-                            Navigator.pop(context);
+                            Navigator.pop(context, true);
                           }
                         },
                         style: OutlinedButton.styleFrom(
@@ -299,10 +290,7 @@ class _LoginViewState extends State<LoginView> {
                           await authViewModel.signInWithApple();
                           if (context.mounted &&
                               authViewModel.state == AuthState.success) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Giriş Başarılı!')),
-                            );
-                            Navigator.pop(context);
+                            Navigator.pop(context, true);
                           }
                         },
                         style: OutlinedButton.styleFrom(

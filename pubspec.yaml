@@ -58,6 +58,7 @@ dependencies:
   permission_handler: ^11.3.1
   path: ^1.9.0
   async: ^2.11.0
+  flutter_hooks: ^0.21.3+1
 
 dev_dependencies:
   flutter_test:

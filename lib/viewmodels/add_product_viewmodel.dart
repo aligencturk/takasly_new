@@ -109,29 +109,30 @@ class AddProductViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> _fetchSubCategories(int parentId, int levelIndex) async {
+  Future<bool> _fetchSubCategories(int parentId, int levelIndex) async {
     try {
       final response = await _generalService.getCategories(parentId);
       if (response['success'] == true && response['data'] != null) {
-        if (response['data']['categories'] == null) return;
+        if (response['data']['categories'] == null) return false;
         final List list = response['data']['categories'];
         final newOptions = list.map((e) => Category.fromJson(e)).toList();
 
         if (newOptions.isNotEmpty) {
-          // If we are updating an existing level (rare case) or adding a new one
           if (levelIndex < categoryLevels.length) {
             categoryLevels[levelIndex] = newOptions;
             selectedSubCategories[levelIndex] = null;
           } else {
-            // Add new level
             categoryLevels.add(newOptions);
             selectedSubCategories.add(null);
           }
           notifyListeners();
+          return true;
         }
       }
+      return false;
     } catch (e) {
       _logger.e("Error fetching sub-categories level $levelIndex: $e");
+      return false;
     }
   }
 
@@ -164,7 +165,7 @@ class AddProductViewModel extends ChangeNotifier {
   }
 
   // Setters
-  void setSelectedCategory(Category? category) {
+  Future<bool> setSelectedCategory(Category? category) async {
     selectedCategory = category;
 
     // Reset all sub levels
@@ -174,12 +175,12 @@ class AddProductViewModel extends ChangeNotifier {
     notifyListeners();
 
     if (category?.catID != null) {
-      // Try to fetch level 0 of subcategories (which is actually level 1 in hierarchy)
-      _fetchSubCategories(category!.catID!, 0);
+      return await _fetchSubCategories(category!.catID!, 0);
     }
+    return false;
   }
 
-  void onSubCategoryChanged(int levelIndex, Category? category) {
+  Future<bool> onSubCategoryChanged(int levelIndex, Category? category) async {
     // Update selection at this level
     if (levelIndex < selectedSubCategories.length) {
       selectedSubCategories[levelIndex] = category;
@@ -198,8 +199,9 @@ class AddProductViewModel extends ChangeNotifier {
 
     // Fetch next level if a valid category was selected
     if (category?.catID != null) {
-      _fetchSubCategories(category!.catID!, levelIndex + 1);
+      return await _fetchSubCategories(category!.catID!, levelIndex + 1);
     }
+    return false;
   }
 
   void setSelectedCondition(Condition? condition) {
@@ -251,6 +253,26 @@ class AddProductViewModel extends ChangeNotifier {
       _logger.e("Error picking images: $e");
       errorMessage = "Resim seçilirken hata oluştu.";
       notifyListeners();
+    }
+  }
+
+  Future<bool> pickFromCamera() async {
+    try {
+      final XFile? photo = await _picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 70,
+      );
+      if (photo != null) {
+        selectedImages.add(File(photo.path));
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      _logger.e("Error picking from camera: $e");
+      errorMessage = "Fotoğraf çekilirken hata oluştu.";
+      notifyListeners();
+      return false;
     }
   }
 
