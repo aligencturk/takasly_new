@@ -8,6 +8,7 @@ import '../../viewmodels/product_detail_viewmodel.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/ticket_viewmodel.dart';
 import '../../viewmodels/trade_viewmodel.dart';
+import '../../viewmodels/notification_viewmodel.dart';
 import '../../theme/app_theme.dart';
 import '../widgets/category_card.dart';
 import '../widgets/product_card.dart';
@@ -71,9 +72,14 @@ class _HomeViewState extends State<HomeView> {
           bool isFirstInit = productVM.products.isEmpty && !productVM.isLoading;
 
           // Sync token.
-          // If this is the first initialization, DO NOT refresh immediately.
-          // Let init() called below handle the fetch after getting location.
           productVM.setUserToken(authVM.user?.token, refresh: !isFirstInit);
+
+          // Fetch notifications if user is logged in
+          if (authVM.user?.userID != null) {
+            context.read<NotificationViewModel>().fetchNotifications(
+              authVM.user!.userID,
+            );
+          }
 
           // If products are not loaded yet, call init() which handles Location + Fetch
           if (isFirstInit) {
@@ -161,13 +167,23 @@ class _HomeViewState extends State<HomeView> {
                   : Consumer2<HomeViewModel, ProductViewModel>(
                       builder: (context, homeViewModel, productViewModel, child) {
                         return RefreshIndicator(
+                          color: AppTheme.primary,
                           onRefresh: () async {
+                            final authVM = context.read<AuthViewModel>();
+                            final notificationVM = context
+                                .read<NotificationViewModel>();
+                            final productVM = productViewModel;
+                            final homeVM = homeViewModel;
+
                             await Future.wait([
-                              productViewModel.fetchProducts(isRefresh: true),
-                              homeViewModel.init(isRefresh: true),
+                              productVM.fetchProducts(isRefresh: true),
+                              homeVM.init(isRefresh: true),
+                              if (authVM.user?.userID != null)
+                                notificationVM.fetchNotifications(
+                                  authVM.user!.userID,
+                                ),
                             ]);
                           },
-                          color: AppTheme.primary,
                           child: CustomScrollView(
                             controller: _scrollController,
                             physics: const AlwaysScrollableScrollPhysics(),
@@ -262,41 +278,67 @@ class _HomeViewState extends State<HomeView> {
                                             ),
                                           );
                                         },
-                                        child: Stack(
-                                          children: [
-                                            Container(
-                                              padding: const EdgeInsets.all(8),
-                                              decoration: const BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                color: Colors.white,
-                                              ),
-                                              child: const Icon(
-                                                Icons.notifications_none,
-                                                color: AppTheme.textPrimary,
-                                              ),
-                                            ),
-                                            Positioned(
-                                              top: 0,
-                                              right: 0,
-                                              child: Container(
-                                                padding: const EdgeInsets.all(
-                                                  4,
-                                                ),
-                                                decoration: const BoxDecoration(
-                                                  shape: BoxShape.circle,
-                                                  color: Colors.red,
-                                                ),
-                                                child: const Text(
-                                                  '1',
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 10,
-                                                    fontWeight: FontWeight.bold,
+                                        child: Consumer<NotificationViewModel>(
+                                          builder: (context, notificationVM, child) {
+                                            return Stack(
+                                              children: [
+                                                Container(
+                                                  padding: const EdgeInsets.all(
+                                                    8,
+                                                  ),
+                                                  decoration:
+                                                      const BoxDecoration(
+                                                        shape: BoxShape.circle,
+                                                        color: Colors.white,
+                                                      ),
+                                                  child: const Icon(
+                                                    Icons.notifications_none,
+                                                    color: AppTheme.textPrimary,
                                                   ),
                                                 ),
-                                              ),
-                                            ),
-                                          ],
+                                                if (notificationVM.unreadCount >
+                                                    0)
+                                                  Positioned(
+                                                    top: 0,
+                                                    right: 0,
+                                                    child: Container(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                            4,
+                                                          ),
+                                                      constraints:
+                                                          const BoxConstraints(
+                                                            minWidth: 16,
+                                                            minHeight: 16,
+                                                          ),
+                                                      decoration:
+                                                          const BoxDecoration(
+                                                            shape:
+                                                                BoxShape.circle,
+                                                            color: Colors.red,
+                                                          ),
+                                                      child: Text(
+                                                        notificationVM
+                                                                    .unreadCount >
+                                                                9
+                                                            ? '9+'
+                                                            : notificationVM
+                                                                  .unreadCount
+                                                                  .toString(),
+                                                        style: const TextStyle(
+                                                          color: Colors.white,
+                                                          fontSize: 10,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                        textAlign:
+                                                            TextAlign.center,
+                                                      ),
+                                                    ),
+                                                  ),
+                                              ],
+                                            );
+                                          },
                                         ),
                                       ),
                                     ],

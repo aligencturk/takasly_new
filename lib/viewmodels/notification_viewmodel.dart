@@ -16,6 +16,8 @@ class NotificationViewModel extends ChangeNotifier {
   List<NotificationModel> _notifications = [];
   List<NotificationModel> get notifications => _notifications;
 
+  int get unreadCount => _notifications.where((n) => !n.isRead).length;
+
   Future<void> fetchNotifications(int userId) async {
     _isLoading = true;
     _errorMessage = null;

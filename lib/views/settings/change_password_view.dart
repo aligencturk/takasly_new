@@ -72,10 +72,22 @@ class _ChangePasswordViewState extends State<ChangePasswordView> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        title: const Text("Şifre Değiştir"),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
+        title: Text(
+          "Şifre Değiştir",
+          style: AppTheme.safePoppins(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            size: 20,
+            color: Colors.white,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
         centerTitle: true,
       ),
       body: authViewModel.state == AuthState.busy
