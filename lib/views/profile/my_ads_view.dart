@@ -4,6 +4,7 @@ import '../../theme/app_theme.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/profile_viewmodel.dart';
 import '../products/product_detail_view.dart';
+import '../products/edit_product_view.dart';
 import '../../models/profile/profile_detail_model.dart';
 import '../widgets/product_card.dart';
 import '../../models/products/product_models.dart' as prod;
@@ -128,6 +129,36 @@ class _MyAdsViewState extends State<MyAdsView> {
                       ProductDetailView(productId: product.productID!),
                 ),
               );
+            }
+          },
+          onEdit: () async {
+            if (product.productID != null) {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EditProductView(
+                    productId: product.productID!,
+                    product: product,
+                  ),
+                ),
+              );
+
+              if (result == true && context.mounted) {
+                // Refresh list
+                final authVM = Provider.of<AuthViewModel>(
+                  context,
+                  listen: false,
+                );
+                final userId = authVM.user?.userID;
+                final userToken = authVM.user?.token;
+
+                if (userId != null) {
+                  Provider.of<ProfileViewModel>(
+                    context,
+                    listen: false,
+                  ).getProfileDetail(userId, userToken);
+                }
+              }
             }
           },
         );

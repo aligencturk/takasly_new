@@ -21,6 +21,9 @@ class HomeViewModel extends ChangeNotifier {
   HomeLogos? _logos;
   HomeLogos? get logos => _logos;
 
+  bool _isCategoriesLoading = false;
+  bool get isCategoriesLoading => _isCategoriesLoading;
+
   List<Category> _categories = [];
   List<Category> get categories => _categories;
 
@@ -54,7 +57,9 @@ class HomeViewModel extends ChangeNotifier {
   List<Category> get subCategories => _subCategories;
 
   Future<void> init({bool isRefresh = false}) async {
-    _isLoading = true;
+    if (_categories.isEmpty) {
+      _isLoading = true;
+    }
     _errorMessage = null;
     notifyListeners();
 
@@ -155,6 +160,7 @@ class HomeViewModel extends ChangeNotifier {
     int parentId = 0,
     bool isRefresh = false,
   ]) async {
+    _isCategoriesLoading = true;
     try {
       // If it's the root categories (parentId == 0) and not a refresh, try cache first
       if (parentId == 0 && !isRefresh) {
@@ -193,6 +199,11 @@ class HomeViewModel extends ChangeNotifier {
       }
     } catch (e) {
       _logger.e('Error fetching categories (parent: $parentId): $e');
+    } finally {
+      if (parentId == 0) {
+        _isCategoriesLoading = false;
+        notifyListeners();
+      }
     }
   }
 

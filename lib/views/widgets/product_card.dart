@@ -6,12 +6,14 @@ class ProductCard extends StatelessWidget {
   final Product product;
   final VoidCallback? onTap;
   final VoidCallback? onFavoritePressed;
+  final VoidCallback? onEdit;
 
   const ProductCard({
     super.key,
     required this.product,
     this.onTap,
     this.onFavoritePressed,
+    this.onEdit,
   });
 
   @override
@@ -57,7 +59,7 @@ class ProductCard extends StatelessWidget {
                       child: product.productImage != null
                           ? Image.network(
                               product.productImage!,
-                              fit: BoxFit.contain,
+                              fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) =>
                                   Container(color: Colors.grey[100]),
                             )
@@ -65,28 +67,50 @@ class ProductCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Top Right Badge (Favorite)
                 Positioned(
                   top: 8, // Tighter spacing
                   right: 8,
-                  child: GestureDetector(
-                    onTap: onFavoritePressed,
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        isFavorite
-                            ? Icons.favorite
-                            : Icons.favorite_border, // Toggle icon
-                        size: 18,
-                        color: isFavorite
-                            ? AppTheme.error
-                            : Colors.grey[400], // Toggle color
-                      ),
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (onEdit != null)
+                        GestureDetector(
+                          onTap: onEdit,
+                          child: Container(
+                            margin: const EdgeInsets.only(right: 8),
+                            padding: const EdgeInsets.all(6),
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.edit_rounded,
+                              size: 18,
+                              color: AppTheme.primary,
+                            ),
+                          ),
+                        ),
+                      if (onFavoritePressed != null)
+                        GestureDetector(
+                          onTap: onFavoritePressed,
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              isFavorite
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              size: 18,
+                              color: isFavorite
+                                  ? AppTheme.error
+                                  : Colors.grey[400],
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ],

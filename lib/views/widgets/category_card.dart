@@ -23,8 +23,30 @@ class CategoryCard extends StatelessWidget {
               height: 40,
               child: SvgPicture.network(
                 category.catImage,
-                placeholderBuilder: (context) =>
-                    const CircularProgressIndicator(),
+                placeholderBuilder: (context) => Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.category_outlined,
+                    size: 20,
+                    color: Colors.grey[300],
+                  ),
+                ),
+                errorBuilder: (context, error, stackTrace) => Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.error_outline,
+                    size: 20,
+                    color: Colors.grey,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 8),

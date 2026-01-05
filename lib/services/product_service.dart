@@ -136,4 +136,23 @@ class ProductService {
       rethrow;
     }
   }
+
+  Future<void> editProduct(
+    AddProductRequestModel request,
+    int productId,
+  ) async {
+    try {
+      final fields = request.toFields();
+      fields['productID'] = productId.toString(); // Add productID to fields
+      final files = await request.toFiles();
+
+      await _apiService.postMultipart(
+        '${ApiConstants.editProduct}$productId/editProduct',
+        fields: fields,
+        files: files,
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

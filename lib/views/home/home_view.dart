@@ -425,7 +425,9 @@ class _HomeViewState extends State<HomeView> {
                               SliverToBoxAdapter(
                                 child: SizedBox(
                                   height: 90,
-                                  child: homeViewModel.isLoading
+                                  child:
+                                      homeViewModel.categories.isEmpty &&
+                                          homeViewModel.isCategoriesLoading
                                       ? const Center(
                                           child: CircularProgressIndicator(),
                                         )

@@ -209,13 +209,29 @@ class _ProductDetailViewState extends State<ProductDetailView> {
     );
   }
 
+  void _showFullScreenImage(List<String> images, int initialIndex) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: Colors.black,
+        pageBuilder: (context, _, __) =>
+            _FullScreenImageViewer(images: images, initialIndex: initialIndex),
+      ),
+    );
+  }
+
   Widget _buildImageGallery(ProductDetail product) {
-    final images =
-        product.productGallery != null && product.productGallery!.isNotEmpty
-        ? product.productGallery!
-        : (product.productImage != null && product.productImage!.isNotEmpty
-              ? [product.productImage!]
-              : []);
+    final List<String> images = [];
+    if (product.productImage != null && product.productImage!.isNotEmpty) {
+      images.add(product.productImage!);
+    }
+    if (product.productGallery != null && product.productGallery!.isNotEmpty) {
+      for (var img in product.productGallery!) {
+        if (!images.contains(img)) {
+          images.add(img);
+        }
+      }
+    }
 
     return Stack(
       alignment: Alignment.bottomCenter,
@@ -236,11 +252,17 @@ class _ProductDetailViewState extends State<ProductDetailView> {
                     });
                   },
                   itemBuilder: (context, index) {
-                    return Image.network(
-                      images[index],
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) =>
-                          Container(color: Colors.grey[200]),
+                    return GestureDetector(
+                      onTap: () => _showFullScreenImage(images, index),
+                      child: Hero(
+                        tag: images[index],
+                        child: Image.network(
+                          images[index],
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(color: Colors.grey[200]),
+                        ),
+                      ),
                     );
                   },
                 ),
@@ -818,6 +840,137 @@ class _ProductDetailViewState extends State<ProductDetailView> {
           ),
         );
       },
+    );
+  }
+}
+
+class _FullScreenImageViewer extends StatefulWidget {
+  final List<String> images;
+  final int initialIndex;
+
+  const _FullScreenImageViewer({
+    required this.images,
+    required this.initialIndex,
+  });
+
+  @override
+  State<_FullScreenImageViewer> createState() => _FullScreenImageViewerState();
+}
+
+class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
+  late PageController _pageController;
+  late int _currentIndex;
+  bool _showUI = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          PageView.builder(
+            controller: _pageController,
+            itemCount: widget.images.length,
+            onPageChanged: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            itemBuilder: (context, index) {
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _showUI = !_showUI;
+                  });
+                },
+                onVerticalDragEnd: (details) {
+                  if (details.primaryVelocity! > 300 ||
+                      details.primaryVelocity! < -300) {
+                    Navigator.of(context).pop();
+                  }
+                },
+                child: InteractiveViewer(
+                  minScale: 1.0,
+                  maxScale: 4.0,
+                  child: Center(
+                    child: Hero(
+                      tag: widget.images[index],
+                      child: Image.network(
+                        widget.images[index],
+                        fit: BoxFit.contain,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(Icons.error, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          if (_showUI)
+            AnimatedOpacity(
+              duration: const Duration(milliseconds: 200),
+              opacity: _showUI ? 1.0 : 0.0,
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '${_currentIndex + 1} / ${widget.images.length}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          color: Colors.white,
+                          size: 32,
+                        ),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

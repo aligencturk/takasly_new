@@ -5,6 +5,7 @@ import '../../theme/app_theme.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import 'register_view.dart';
 import 'forgot_password_view.dart';
+import '../home/home_view.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -195,7 +196,7 @@ class _LoginViewState extends State<LoginView> {
 
                             if (context.mounted &&
                                 authViewModel.state == AuthState.success) {
-                              Navigator.pop(context, true);
+                              _handleLoginSuccess(context);
                             }
                           },
                     style: ElevatedButton.styleFrom(
@@ -255,7 +256,7 @@ class _LoginViewState extends State<LoginView> {
                           await authViewModel.signInWithGoogle();
                           if (context.mounted &&
                               authViewModel.state == AuthState.success) {
-                            Navigator.pop(context, true);
+                            _handleLoginSuccess(context);
                           }
                         },
                         style: OutlinedButton.styleFrom(
@@ -290,7 +291,7 @@ class _LoginViewState extends State<LoginView> {
                           await authViewModel.signInWithApple();
                           if (context.mounted &&
                               authViewModel.state == AuthState.success) {
-                            Navigator.pop(context, true);
+                            _handleLoginSuccess(context);
                           }
                         },
                         style: OutlinedButton.styleFrom(
@@ -360,5 +361,16 @@ class _LoginViewState extends State<LoginView> {
         ),
       ),
     );
+  }
+
+  void _handleLoginSuccess(BuildContext context) {
+    if (Navigator.of(context).canPop()) {
+      Navigator.pop(context, true);
+    } else {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const HomeView()),
+        (route) => false,
+      );
+    }
   }
 }
