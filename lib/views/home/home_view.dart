@@ -46,9 +46,6 @@ class _HomeViewState extends State<HomeView> {
     // Fetch Data
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<HomeViewModel>().init();
-      // ProductViewModel init happens after token sync in didChangeDependencies
-      // We removed the unconditional init() here to prevent guest-mode fetch race condition.
-      // context.read<ProductViewModel>().init();
     });
   }
 
@@ -154,462 +151,447 @@ class _HomeViewState extends State<HomeView> {
           : _selectedIndex == 1
           ? const TicketsView()
           : SafeArea(
-              child: _selectedIndex != 0
-                  ? Center(
-                      child: Text(
-                        "Sayfa $_selectedIndex Yapım Aşamasında",
-                        style: AppTheme.safePoppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: AppTheme.textSecondary,
-                        ),
-                      ),
-                    )
-                  : Consumer2<HomeViewModel, ProductViewModel>(
-                      builder: (context, homeViewModel, productViewModel, child) {
-                        return RefreshIndicator(
-                          color: AppTheme.primary,
-                          onRefresh: () async {
-                            final authVM = context.read<AuthViewModel>();
-                            final notificationVM = context
-                                .read<NotificationViewModel>();
-                            final productVM = productViewModel;
-                            final homeVM = homeViewModel;
+              child: Consumer2<HomeViewModel, ProductViewModel>(
+                builder: (context, homeViewModel, productViewModel, child) {
+                  return RefreshIndicator(
+                    color: AppTheme.primary,
+                    onRefresh: () async {
+                      final authVM = context.read<AuthViewModel>();
+                      final notificationVM = context
+                          .read<NotificationViewModel>();
 
-                            await Future.wait([
-                              productVM.fetchProducts(isRefresh: true),
-                              homeVM.init(isRefresh: true),
-                              if (authVM.user?.userID != null)
-                                notificationVM.fetchNotifications(
-                                  authVM.user!.userID,
-                                ),
-                            ]);
-                          },
-                          child: CustomScrollView(
-                            controller: _scrollController,
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            slivers: [
-                              // Header - Logo, Buttons
-                              SliverToBoxAdapter(
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10.0,
-                                    vertical: 10.0,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      // Logo
-                                      if (homeViewModel.logos?.logo != null)
-                                        Image.network(
-                                          homeViewModel.logos!.logo!,
-                                          height: 50, // Adjust height
-                                          errorBuilder: (c, e, s) => const Text(
-                                            'Takasly',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 24,
-                                              color: AppTheme.primary,
-                                            ),
-                                          ),
-                                        )
-                                      else
-                                        const Text(
-                                          'Takasly',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 24,
-                                            color: AppTheme.primary,
-                                          ),
-                                        ),
-
-                                      const Spacer(),
-
-                                      // Activities Button
-                                      GestureDetector(
-                                        onTap: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const EventsView(),
-                                            ),
-                                          );
-                                        },
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 16,
-                                            vertical: 8,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: AppTheme.primary,
-                                            borderRadius: BorderRadius.circular(
-                                              20,
-                                            ),
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              const Icon(
-                                                Icons.celebration,
-                                                color: Colors.white,
-                                                size: 16,
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                'ETKİNLİKLER',
-                                                style: AppTheme.safePoppins(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: Colors.white,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
+                      await Future.wait([
+                        productViewModel.fetchProducts(isRefresh: true),
+                        homeViewModel.init(isRefresh: true),
+                        if (authVM.user?.userID != null)
+                          notificationVM.fetchNotifications(
+                            authVM.user!.userID,
+                          ),
+                      ]);
+                    },
+                    child: CustomScrollView(
+                      controller: _scrollController,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        // Header - Logo, Buttons
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10.0,
+                              vertical: 10.0,
+                            ),
+                            child: Row(
+                              children: [
+                                // Logo
+                                if (homeViewModel.logos?.logo != null)
+                                  Image.network(
+                                    homeViewModel.logos!.logo!,
+                                    height: 50, // Adjust height
+                                    errorBuilder: (c, e, s) => const Text(
+                                      'Takasly',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 24,
+                                        color: AppTheme.primary,
                                       ),
-
-                                      const SizedBox(width: 12),
-
-                                      // Notification Icon
-                                      GestureDetector(
-                                        onTap: () {
-                                          Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const NotificationsView(),
-                                            ),
-                                          );
-                                        },
-                                        child: Consumer<NotificationViewModel>(
-                                          builder: (context, notificationVM, child) {
-                                            return Stack(
-                                              children: [
-                                                Container(
-                                                  padding: const EdgeInsets.all(
-                                                    8,
-                                                  ),
-                                                  decoration:
-                                                      const BoxDecoration(
-                                                        shape: BoxShape.circle,
-                                                        color: Colors.white,
-                                                      ),
-                                                  child: const Icon(
-                                                    Icons.notifications_none,
-                                                    color: AppTheme.textPrimary,
-                                                  ),
-                                                ),
-                                                if (notificationVM.unreadCount >
-                                                    0)
-                                                  Positioned(
-                                                    top: 0,
-                                                    right: 0,
-                                                    child: Container(
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                            4,
-                                                          ),
-                                                      constraints:
-                                                          const BoxConstraints(
-                                                            minWidth: 16,
-                                                            minHeight: 16,
-                                                          ),
-                                                      decoration:
-                                                          const BoxDecoration(
-                                                            shape:
-                                                                BoxShape.circle,
-                                                            color: Colors.red,
-                                                          ),
-                                                      child: Text(
-                                                        notificationVM
-                                                                    .unreadCount >
-                                                                9
-                                                            ? '9+'
-                                                            : notificationVM
-                                                                  .unreadCount
-                                                                  .toString(),
-                                                        style: const TextStyle(
-                                                          color: Colors.white,
-                                                          fontSize: 10,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                        ),
-                                                        textAlign:
-                                                            TextAlign.center,
-                                                      ),
-                                                    ),
-                                                  ),
-                                              ],
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    ],
+                                    ),
+                                  )
+                                else
+                                  const Text(
+                                    'Takasly',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 24,
+                                      color: AppTheme.primary,
+                                    ),
                                   ),
-                                ),
-                              ),
 
-                              // Search Bar
-                              SliverToBoxAdapter(
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16.0,
-                                    vertical: 8.0,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: GestureDetector(
-                                          onTap: () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    ChangeNotifierProvider(
-                                                      create: (_) =>
-                                                          SearchViewModel(),
-                                                      child: const SearchView(),
-                                                    ),
-                                              ),
-                                            );
-                                          },
-                                          child: AbsorbPointer(
-                                            child: TextField(
-                                              readOnly: true,
-                                              decoration: InputDecoration(
-                                                hintText: 'Ürün ara...',
-                                                prefixIcon: const Icon(
-                                                  Icons.search,
-                                                  color: Colors.grey,
-                                                ),
-                                                filled: true,
-                                                fillColor: Colors.white,
-                                                border: OutlineInputBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(30),
-                                                  borderSide: BorderSide.none,
-                                                ),
-                                                contentPadding:
-                                                    const EdgeInsets.symmetric(
-                                                      vertical: 0,
-                                                    ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
+                                const Spacer(),
+
+                                // Activities Button
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const EventsView(),
                                       ),
-                                      const SizedBox(width: 12),
-                                      GestureDetector(
-                                        onTap: () {
-                                          _showFilterBottomSheet(context);
-                                        },
-                                        child: Container(
-                                          padding: const EdgeInsets.all(12),
-                                          decoration: BoxDecoration(
-                                            color: const Color(
-                                              0xFF424242,
-                                            ), // Dark Grey for filter bg
-                                            borderRadius: BorderRadius.circular(
-                                              12,
-                                            ),
-                                          ),
-                                          child: const Icon(
-                                            Icons.filter_list,
+                                    );
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.primary,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.celebration,
+                                          color: Colors.white,
+                                          size: 16,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'ETKİNLİKLER',
+                                          style: AppTheme.safePoppins(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
                                             color: Colors.white,
                                           ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
 
-                              // Categories
-                              SliverToBoxAdapter(
-                                child: SizedBox(
-                                  height: 106,
-                                  child:
-                                      homeViewModel.categories.isEmpty &&
-                                          homeViewModel.isCategoriesLoading
-                                      ? const Center(
-                                          child: CircularProgressIndicator(),
-                                        )
-                                      : ListView.separated(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 16,
-                                            vertical: 8,
+                                const SizedBox(width: 12),
+
+                                // Notification Icon
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const NotificationsView(),
+                                      ),
+                                    );
+                                  },
+                                  child: Consumer<NotificationViewModel>(
+                                    builder: (context, notificationVM, child) {
+                                      return Stack(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.all(8),
+                                            decoration: const BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: Colors.white,
+                                            ),
+                                            child: const Icon(
+                                              Icons.notifications_none,
+                                              color: AppTheme.textPrimary,
+                                            ),
                                           ),
-                                          scrollDirection: Axis.horizontal,
-                                          itemCount:
-                                              homeViewModel.categories.isEmpty
-                                              ? 1
-                                              : homeViewModel
-                                                        .categories
-                                                        .length +
-                                                    1, // +1 for 'Tümü'
-                                          separatorBuilder: (c, i) =>
-                                              const SizedBox(width: 8),
-                                          itemBuilder: (context, index) {
-                                            if (index == 0) {
-                                              // 'Tümü' (All) Static Item
-                                              final isAllSelected =
-                                                  productViewModel
-                                                      .selectedCategoryId ==
-                                                  0;
-                                              return GestureDetector(
-                                                onTap: () {
-                                                  productViewModel
-                                                      .filterByCategory(null);
-                                                },
-                                                child: SizedBox(
-                                                  width: 60,
-                                                  child: Column(
-                                                    children: [
-                                                      Container(
-                                                        width: 40,
-                                                        height: 40,
-                                                        decoration:
-                                                            BoxDecoration(
-                                                              color: AppTheme
-                                                                  .primary,
-                                                              shape: BoxShape
-                                                                  .circle,
-                                                            ),
-                                                        child: const Icon(
-                                                          Icons.grid_view,
-                                                          color: Colors.white,
-                                                        ),
-                                                      ),
-                                                      const SizedBox(height: 8),
-                                                      Text(
-                                                        'Tümü',
-                                                        textAlign:
-                                                            TextAlign.center,
-                                                        style: AppTheme.safePoppins(
-                                                          fontSize: 10,
-                                                          fontWeight:
-                                                              isAllSelected
-                                                              ? FontWeight.w700
-                                                              : FontWeight.w600,
-                                                          color: isAllSelected
-                                                              ? AppTheme.primary
-                                                              : AppTheme
-                                                                    .textPrimary,
-                                                        ),
-                                                      ),
-                                                      if (isAllSelected)
-                                                        Container(
-                                                          margin:
-                                                              const EdgeInsets.only(
-                                                                top: 4,
-                                                              ),
-                                                          width: 4,
-                                                          height: 4,
-                                                          decoration:
-                                                              const BoxDecoration(
-                                                                color: AppTheme
-                                                                    .primary,
-                                                                shape: BoxShape
-                                                                    .circle,
-                                                              ),
-                                                        ),
-                                                    ],
-                                                  ),
+                                          if (notificationVM.unreadCount > 0)
+                                            Positioned(
+                                              top: 0,
+                                              right: 0,
+                                              child: Container(
+                                                padding: const EdgeInsets.all(
+                                                  4,
                                                 ),
-                                              );
-                                            }
-                                            final category = homeViewModel
-                                                .categories[index - 1];
-                                            final isSelected =
-                                                productViewModel
-                                                    .selectedCategoryId ==
-                                                category.catID;
-                                            return CategoryCard(
-                                              category: category,
-                                              isSelected: isSelected,
-                                              onTap: () {
-                                                productViewModel
-                                                    .filterByCategory(
-                                                      category.catID,
-                                                    );
-                                              },
+                                                constraints:
+                                                    const BoxConstraints(
+                                                      minWidth: 16,
+                                                      minHeight: 16,
+                                                    ),
+                                                decoration: const BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  color: Colors.red,
+                                                ),
+                                                child: Text(
+                                                  notificationVM.unreadCount > 9
+                                                      ? '9+'
+                                                      : notificationVM
+                                                            .unreadCount
+                                                            .toString(),
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                  textAlign: TextAlign.center,
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // Search Bar
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                              vertical: 8.0,
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              ChangeNotifierProvider(
+                                                create: (_) =>
+                                                    SearchViewModel(),
+                                                child: const SearchView(),
+                                              ),
+                                        ),
+                                      );
+                                    },
+                                    child: AbsorbPointer(
+                                      child: TextField(
+                                        readOnly: true,
+                                        decoration: InputDecoration(
+                                          hintText: 'Ürün ara...',
+                                          prefixIcon: const Icon(
+                                            Icons.search,
+                                            color: Colors.grey,
+                                          ),
+                                          filled: true,
+                                          fillColor: Colors.white,
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              30,
+                                            ),
+                                            borderSide: BorderSide.none,
+                                          ),
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                vertical: 0,
+                                              ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                GestureDetector(
+                                  onTap: () {
+                                    _showFilterBottomSheet(context);
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: const Color(
+                                        0xFF424242,
+                                      ), // Dark Grey for filter bg
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Icon(
+                                      Icons.filter_list,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // Categories
+                        SliverToBoxAdapter(
+                          child: SizedBox(
+                            height: 92,
+                            child:
+                                homeViewModel.categories.isEmpty &&
+                                    homeViewModel.isCategoriesLoading
+                                ? const Center(
+                                    child: CircularProgressIndicator(),
+                                  )
+                                : ListView.separated(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 8,
+                                    ),
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: homeViewModel.categories.isEmpty
+                                        ? 1
+                                        : homeViewModel.categories.length +
+                                              1, // +1 for 'Tümü'
+                                    separatorBuilder: (c, i) =>
+                                        const SizedBox(width: 8),
+                                    itemBuilder: (context, index) {
+                                      if (index == 0) {
+                                        // 'Tümü' (All) Static Item
+                                        final isAllSelected =
+                                            productViewModel
+                                                .selectedCategoryId ==
+                                            0;
+                                        return GestureDetector(
+                                          onTap: () {
+                                            productViewModel.filterByCategory(
+                                              null,
                                             );
                                           },
-                                        ),
-                                ),
-                              ),
-
-                              // Product List with Interspersed Banners
-                              if (productViewModel.isLoading &&
-                                  productViewModel.products.isEmpty)
-                                const SliverFillRemaining(
-                                  child: Center(
-                                    child: CircularProgressIndicator(),
-                                  ),
-                                )
-                              else if (productViewModel.errorMessage != null &&
-                                  productViewModel.products.isEmpty)
-                                SliverFillRemaining(
-                                  child: Center(
-                                    child: Text(productViewModel.errorMessage!),
-                                  ),
-                                )
-                              else
-                                SliverPadding(
-                                  padding: const EdgeInsets.all(16),
-                                  sliver: SliverList(
-                                    delegate: SliverChildBuilderDelegate(
-                                      (context, index) {
-                                        const int kCycleSize =
-                                            3; // Row, Row, Banner
-
-                                        // Check if it's a Banner Slot
-                                        if ((index + 1) % kCycleSize == 0) {
-                                          return const Padding(
-                                            padding: EdgeInsets.only(
-                                              bottom: 16,
+                                          child: SizedBox(
+                                            width: 70,
+                                            child: Column(
+                                              children: [
+                                                Container(
+                                                  width: 40,
+                                                  height: 40,
+                                                  decoration: BoxDecoration(
+                                                    color: AppTheme.primary,
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                  child: const Icon(
+                                                    Icons.grid_view,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 8),
+                                                Text(
+                                                  'Tümü',
+                                                  textAlign: TextAlign.center,
+                                                  style: AppTheme.safePoppins(
+                                                    fontSize: 10,
+                                                    fontWeight: isAllSelected
+                                                        ? FontWeight.w700
+                                                        : FontWeight.w600,
+                                                    color: isAllSelected
+                                                        ? AppTheme.primary
+                                                        : AppTheme.textPrimary,
+                                                  ),
+                                                ),
+                                                if (isAllSelected)
+                                                  Container(
+                                                    margin:
+                                                        const EdgeInsets.only(
+                                                          top: 4,
+                                                        ),
+                                                    width: 4,
+                                                    height: 4,
+                                                    decoration:
+                                                        const BoxDecoration(
+                                                          color:
+                                                              AppTheme.primary,
+                                                          shape:
+                                                              BoxShape.circle,
+                                                        ),
+                                                  ),
+                                              ],
                                             ),
-                                            child: BannerAdWidget(),
-                                          );
-                                        }
-
-                                        // Calculate Product Row
-                                        // How many banners before this index?
-                                        final int bannersBefore =
-                                            (index + 1) ~/ kCycleSize;
-                                        // How many product rows (items in list that are not banners)
-                                        final int productRowsBefore =
-                                            index - bannersBefore;
-                                        // First product index for this row
-                                        final int startProductIndex =
-                                            productRowsBefore * 2;
-
-                                        if (startProductIndex >=
-                                            productViewModel.products.length) {
-                                          return null;
-                                        }
-
-                                        final firstProduct = productViewModel
-                                            .products[startProductIndex];
-                                        final secondProduct =
-                                            (startProductIndex + 1 <
-                                                productViewModel
-                                                    .products
-                                                    .length)
-                                            ? productViewModel
-                                                  .products[startProductIndex +
-                                                  1]
-                                            : null;
-
-                                        return Padding(
-                                          padding: const EdgeInsets.only(
-                                            bottom: 16,
                                           ),
-                                          child: Row(
-                                            children: [
-                                              Expanded(
-                                                child: AspectRatio(
+                                        );
+                                      }
+                                      final category =
+                                          homeViewModel.categories[index - 1];
+                                      final isSelected =
+                                          productViewModel.selectedCategoryId ==
+                                          category.catID;
+                                      return CategoryCard(
+                                        category: category,
+                                        isSelected: isSelected,
+                                        onTap: () {
+                                          productViewModel.filterByCategory(
+                                            category.catID,
+                                          );
+                                        },
+                                      );
+                                    },
+                                  ),
+                          ),
+                        ),
+
+                        // Product List with Interspersed Banners
+                        if (productViewModel.isLoading &&
+                            productViewModel.products.isEmpty)
+                          const SliverFillRemaining(
+                            child: Center(child: CircularProgressIndicator()),
+                          )
+                        else if (productViewModel.errorMessage != null &&
+                            productViewModel.products.isEmpty)
+                          SliverFillRemaining(
+                            child: Center(
+                              child: Text(productViewModel.errorMessage!),
+                            ),
+                          )
+                        else
+                          SliverPadding(
+                            padding: const EdgeInsets.all(16),
+                            sliver: SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                                  const int kCycleSize = 3; // Row, Row, Banner
+
+                                  // Check if it's a Banner Slot
+                                  if ((index + 1) % kCycleSize == 0) {
+                                    return const Padding(
+                                      padding: EdgeInsets.only(bottom: 16),
+                                      child: BannerAdWidget(),
+                                    );
+                                  }
+
+                                  // Calculate Product Row
+                                  // How many banners before this index?
+                                  final int bannersBefore =
+                                      (index + 1) ~/ kCycleSize;
+                                  // How many product rows (items in list that are not banners)
+                                  final int productRowsBefore =
+                                      index - bannersBefore;
+                                  // First product index for this row
+                                  final int startProductIndex =
+                                      productRowsBefore * 2;
+
+                                  if (startProductIndex >=
+                                      productViewModel.products.length) {
+                                    return null;
+                                  }
+
+                                  final firstProduct = productViewModel
+                                      .products[startProductIndex];
+                                  final secondProduct =
+                                      (startProductIndex + 1 <
+                                          productViewModel.products.length)
+                                      ? productViewModel
+                                            .products[startProductIndex + 1]
+                                      : null;
+
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 16),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: AspectRatio(
+                                            aspectRatio: 0.65,
+                                            child: ProductCard(
+                                              product: firstProduct,
+                                              onTap: () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        ChangeNotifierProvider(
+                                                          create: (_) =>
+                                                              ProductDetailViewModel(),
+                                                          child: ProductDetailView(
+                                                            productId:
+                                                                firstProduct
+                                                                    .productID!,
+                                                          ),
+                                                        ),
+                                                  ),
+                                                );
+                                              },
+                                              onFavoritePressed: () {
+                                                productViewModel.toggleFavorite(
+                                                  firstProduct,
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 16),
+                                        Expanded(
+                                          child: secondProduct != null
+                                              ? AspectRatio(
                                                   aspectRatio: 0.65,
                                                   child: ProductCard(
-                                                    product: firstProduct,
+                                                    product: secondProduct,
                                                     onTap: () {
                                                       Navigator.push(
                                                         context,
@@ -620,7 +602,7 @@ class _HomeViewState extends State<HomeView> {
                                                                     ProductDetailViewModel(),
                                                                 child: ProductDetailView(
                                                                   productId:
-                                                                      firstProduct
+                                                                      secondProduct
                                                                           .productID!,
                                                                 ),
                                                               ),
@@ -630,82 +612,46 @@ class _HomeViewState extends State<HomeView> {
                                                     onFavoritePressed: () {
                                                       productViewModel
                                                           .toggleFavorite(
-                                                            firstProduct,
+                                                            secondProduct,
                                                           );
                                                     },
                                                   ),
-                                                ),
-                                              ),
-                                              const SizedBox(width: 16),
-                                              Expanded(
-                                                child: secondProduct != null
-                                                    ? AspectRatio(
-                                                        aspectRatio: 0.65,
-                                                        child: ProductCard(
-                                                          product:
-                                                              secondProduct,
-                                                          onTap: () {
-                                                            Navigator.push(
-                                                              context,
-                                                              MaterialPageRoute(
-                                                                builder: (context) => ChangeNotifierProvider(
-                                                                  create: (_) =>
-                                                                      ProductDetailViewModel(),
-                                                                  child: ProductDetailView(
-                                                                    productId:
-                                                                        secondProduct
-                                                                            .productID!,
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            );
-                                                          },
-                                                          onFavoritePressed: () {
-                                                            productViewModel
-                                                                .toggleFavorite(
-                                                                  secondProduct,
-                                                                );
-                                                          },
-                                                        ),
-                                                      )
-                                                    : const SizedBox(), // Empty holder
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      },
-                                      // Count rough estimate: (Products / 2) + Banners
-                                      childCount: (() {
-                                        final productCount =
-                                            productViewModel.products.length;
-                                        final rowCount = (productCount / 2)
-                                            .ceil();
-                                        final bannerCount = rowCount ~/ 2;
-                                        return rowCount + bannerCount;
-                                      })(),
+                                                )
+                                              : const SizedBox(), // Empty holder
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                ),
-
-                              // Loading More Indicator
-                              if (productViewModel.isLoadMoreRunning)
-                                const SliverToBoxAdapter(
-                                  child: Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 20),
-                                    child: Center(
-                                      child: CircularProgressIndicator(),
-                                    ),
-                                  ),
-                                ),
-
-                              const SliverToBoxAdapter(
-                                child: SizedBox(height: 100),
-                              ), // Bottom padding
-                            ],
+                                  );
+                                },
+                                // Count rough estimate: (Products / 2) + Banners
+                                childCount: (() {
+                                  final productCount =
+                                      productViewModel.products.length;
+                                  final rowCount = (productCount / 2).ceil();
+                                  final bannerCount = rowCount ~/ 2;
+                                  return rowCount + bannerCount;
+                                })(),
+                              ),
+                            ),
                           ),
-                        );
-                      },
+
+                        // Loading More Indicator
+                        if (productViewModel.isLoadMoreRunning)
+                          const SliverToBoxAdapter(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 20),
+                              child: Center(child: CircularProgressIndicator()),
+                            ),
+                          ),
+
+                        const SliverToBoxAdapter(
+                          child: SizedBox(height: 100),
+                        ), // Bottom padding
+                      ],
                     ),
+                  );
+                },
+              ),
             ),
       // Bottom Navigation Bar
       bottomNavigationBar: CustomBottomNavigationBar(

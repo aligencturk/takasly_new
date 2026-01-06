@@ -20,7 +20,7 @@ class CategoryCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
-        width: 70,
+        width: 60,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -57,16 +57,16 @@ class CategoryCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              category.catName.length > 30
-                  ? '${category.catName.substring(0, 30)}...'
+              category.catName.length > 40
+                  ? '${category.catName.substring(0, 40)}...'
                   : category.catName,
               textAlign: TextAlign.center,
               style: AppTheme.safePoppins(
-                fontSize: 9,
+                fontSize: 10,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 color: isSelected ? AppTheme.primary : AppTheme.textPrimary,
               ),
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
             if (isSelected)
