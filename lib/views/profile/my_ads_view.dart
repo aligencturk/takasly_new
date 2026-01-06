@@ -80,13 +80,16 @@ class _MyAdsViewState extends State<MyAdsView> {
                     ],
                   ),
                 )
-              : _buildProductsGrid(profile.products!),
+              : _buildProductsGrid(profile.products!, viewModel),
         );
       },
     );
   }
 
-  Widget _buildProductsGrid(List<ProfileProduct> products) {
+  Widget _buildProductsGrid(
+    List<ProfileProduct> products,
+    ProfileViewModel viewModel,
+  ) {
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -161,8 +164,93 @@ class _MyAdsViewState extends State<MyAdsView> {
               }
             }
           },
+          onDelete: () => _showDeleteConfirmation(context, viewModel, product),
         );
       },
     );
+  }
+
+  Future<void> _showDeleteConfirmation(
+    BuildContext context,
+    ProfileViewModel viewModel,
+    prod.Product product,
+  ) async {
+    final authVM = Provider.of<AuthViewModel>(context, listen: false);
+    final userToken = authVM.user?.token;
+    final userId = authVM.user?.userID;
+
+    if (userToken == null || userId == null || product.productID == null)
+      return;
+
+    // First confirmation
+    final bool? firstConfirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('İlanı Sil'),
+        content: const Text(
+          'Bu ilanı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('VAZGEÇ', style: TextStyle(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'EVET, SİL',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (firstConfirm != true) return;
+
+    // Second confirmation
+    // ignore: use_build_context_synchronously
+    if (!context.mounted) return;
+    final bool? secondConfirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('⚠️ SON UYARI'),
+        content: const Text(
+          'Gerçekten kararlı mısınız? İlanınız sistemden tamamen kaldırılacaktır.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text(
+              'HAYIR, VAZGEÇ',
+              style: TextStyle(color: Colors.black54),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'EVET, KESİN SİL',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.w900),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (secondConfirm != true) return;
+
+    final success = await viewModel.deleteProduct(
+      userToken: userToken,
+      userId: userId,
+      productId: product.productID!,
+    );
+
+    if (success && context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('İlan başarıyla silindi.')));
+    }
   }
 }

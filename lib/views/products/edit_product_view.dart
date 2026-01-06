@@ -111,7 +111,10 @@ class _EditProductViewBody extends HookWidget {
                   SafeArea(
                     child: Column(
                       children: [
-                        _ModernAppBar(currentStep: currentStep.value),
+                        _ModernAppBar(
+                          currentStep: currentStep.value,
+                          onDelete: () => _handleDelete(context, viewModel),
+                        ),
                         _ProgressIndicator(currentStep: currentStep.value),
                         Expanded(
                           child: PageView(
@@ -176,11 +179,96 @@ class _EditProductViewBody extends HookWidget {
       }
     }
   }
+
+  Future<void> _handleDelete(
+    BuildContext context,
+    EditProductViewModel viewModel,
+  ) async {
+    // First confirmation
+    final bool? firstConfirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('İlanı Sil'),
+        content: const Text(
+          'Bu ilanı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('VAZGEÇ', style: TextStyle(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'EVET, SİL',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (firstConfirm != true) return;
+
+    // Second confirmation
+    // ignore: use_build_context_synchronously
+    if (!context.mounted) return;
+    final bool? secondConfirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('⚠️ SON UYARI'),
+        content: const Text(
+          'Gerçekten kararlı mısınız? İlanınız sistemden tamamen kaldırılacaktır.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text(
+              'HAYIR, VAZGEÇ',
+              style: TextStyle(color: Colors.black54),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'EVET, KESİN SİL',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.w900),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (secondConfirm != true) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('userToken');
+    int? userId;
+    final dynamic rawUserId = prefs.get('userID');
+    if (rawUserId is int) {
+      userId = rawUserId;
+    } else if (rawUserId is String) {
+      userId = int.tryParse(rawUserId);
+    }
+
+    if (token != null && userId != null) {
+      final success = await viewModel.deleteProduct(token, userId);
+      if (success && context.mounted) {
+        Navigator.pop(context, true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('İlan başarıyla silindi.')),
+        );
+      }
+    }
+  }
 }
 
 class _ModernAppBar extends StatelessWidget {
   final int currentStep;
-  const _ModernAppBar({required this.currentStep});
+  final VoidCallback? onDelete;
+  const _ModernAppBar({required this.currentStep, this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -203,7 +291,14 @@ class _ModernAppBar extends StatelessWidget {
               letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(width: 40), // Placeholder to center
+          if (onDelete != null)
+            IconButton(
+              onPressed: onDelete,
+              icon: const Icon(Icons.delete_outline_rounded, size: 22),
+              color: Colors.redAccent,
+            )
+          else
+            const SizedBox(width: 40),
         ],
       ),
     );
@@ -1395,7 +1490,6 @@ class _CustomTextField extends StatelessWidget {
   final int maxLines;
   final TextInputAction? textInputAction;
   final void Function(String)? onSubmitted;
-  final TextInputType? keyboardType;
 
   const _CustomTextField({
     required this.controller,
@@ -1404,7 +1498,6 @@ class _CustomTextField extends StatelessWidget {
     this.maxLines = 1,
     this.textInputAction,
     this.onSubmitted,
-    this.keyboardType,
   });
 
   @override
@@ -1455,11 +1548,9 @@ class _CustomTextField extends StatelessWidget {
                     maxLines: maxLines,
                     textInputAction: textInputAction,
                     onSubmitted: onSubmitted,
-                    keyboardType:
-                        keyboardType ??
-                        (maxLines > 1
-                            ? TextInputType.multiline
-                            : TextInputType.text),
+                    keyboardType: (maxLines > 1
+                        ? TextInputType.multiline
+                        : TextInputType.text),
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,

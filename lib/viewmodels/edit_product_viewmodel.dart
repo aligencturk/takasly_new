@@ -499,6 +499,27 @@ class EditProductViewModel extends ChangeNotifier {
     }
   }
 
+  Future<bool> deleteProduct(String userToken, int userId) async {
+    isLoading = true;
+    errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _productService.deleteProduct(userToken, userId, productId);
+      return true;
+    } catch (e) {
+      if (e is BusinessException) {
+        errorMessage = e.message;
+      } else {
+        errorMessage = "Ürün silinirken hata oluştu: $e";
+      }
+      return false;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
   bool _validate() {
     if (titleController.text.trim().isEmpty) {
       errorMessage = "Başlık giriniz.";

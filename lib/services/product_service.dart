@@ -156,4 +156,20 @@ class ProductService {
       rethrow;
     }
   }
+
+  Future<void> deleteProduct(
+    String userToken,
+    int userId,
+    int productId,
+  ) async {
+    try {
+      final payload = {"userToken": userToken, "productID": productId};
+      await _apiService.post(
+        '${ApiConstants.deleteProduct}$userId/deleteProduct',
+        payload,
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

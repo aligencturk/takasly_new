@@ -24,6 +24,8 @@ class ApiConstants {
   static const String addProduct = 'service/user/product/'; // + {id}/addProduct
   static const String editProduct =
       'service/user/product/'; // + {id}/editProduct
+  static const String deleteProduct =
+      'service/user/product/'; // + {id}/deleteProduct
 
   // Auth Credentials
   static const String apiUser = 'Tk2BULs2IC4HJN2nlvp9T5ycBoyMJD';

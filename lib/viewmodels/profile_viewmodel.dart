@@ -92,4 +92,31 @@ class ProfileViewModel extends ChangeNotifier {
       return false;
     }
   }
+
+  Future<bool> deleteProduct({
+    required String userToken,
+    required int userId,
+    required int productId,
+  }) async {
+    _state = ProfileState.busy;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _productService.deleteProduct(userToken, userId, productId);
+      // Remove from local list if successful to avoid full refetch
+      if (_profileDetail?.products != null) {
+        _profileDetail!.products!.removeWhere((p) => p.productID == productId);
+      }
+      _state = ProfileState.success;
+      return true;
+    } catch (e) {
+      _state = ProfileState.error;
+      _errorMessage = e.toString();
+      _logger.e("Product delete error: $e");
+      return false;
+    } finally {
+      notifyListeners();
+    }
+  }
 }
