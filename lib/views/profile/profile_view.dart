@@ -13,6 +13,8 @@ import '../settings/change_password_view.dart';
 import '../settings/settings_view.dart';
 import '../settings/contact_view.dart';
 
+import '../widgets/ads/banner_ad_widget.dart';
+
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
 
@@ -49,7 +51,7 @@ class _ProfileViewState extends State<ProfileView> {
       backgroundColor: AppTheme.background,
       appBar: _buildAppBar(context),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 160),
         child: Column(
           children: [
             const SizedBox(height: 16),
@@ -208,9 +210,13 @@ class _ProfileViewState extends State<ProfileView> {
                 ),
               ),
             ),
-            const SizedBox(height: 140),
+            const SizedBox(height: 100),
           ],
         ),
+      ),
+      bottomNavigationBar: const Padding(
+        padding: EdgeInsets.only(bottom: 90),
+        child: BannerAdWidget(),
       ),
     );
   }

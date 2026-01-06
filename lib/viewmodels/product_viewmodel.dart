@@ -205,6 +205,8 @@ class ProductViewModel extends ChangeNotifier {
     fetchProducts(isRefresh: true);
   }
 
+  int get selectedCategoryId => _currentFilter.categoryID ?? 0;
+
   String? get userToken => _currentFilter.userToken;
 
   void setUserToken(String? token, {bool refresh = true}) {

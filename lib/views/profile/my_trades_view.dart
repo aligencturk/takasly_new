@@ -7,6 +7,8 @@ import '../../models/trade_model.dart';
 import '../../models/products/product_models.dart';
 import 'trade_detail_view.dart';
 
+import '../widgets/ads/banner_ad_widget.dart';
+
 class MyTradesView extends StatelessWidget {
   final bool showBackButton;
 
@@ -154,6 +156,10 @@ class _MyTradesViewContentState extends State<_MyTradesViewContent>
           );
         },
       ),
+      bottomNavigationBar: const Padding(
+        padding: EdgeInsets.only(bottom: 90),
+        child: BannerAdWidget(),
+      ),
     );
   }
 
@@ -163,7 +169,7 @@ class _MyTradesViewContentState extends State<_MyTradesViewContent>
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 160),
       itemCount: trades.length,
       separatorBuilder: (context, index) => const SizedBox(height: 16),
       itemBuilder: (context, index) {

@@ -6,6 +6,8 @@ import 'package:takasly/theme/app_theme.dart';
 import '../../models/tickets/ticket_model.dart';
 import 'chat_view.dart';
 
+import '../widgets/ads/banner_ad_widget.dart';
+
 class TicketsView extends StatefulWidget {
   const TicketsView({super.key});
 
@@ -141,7 +143,7 @@ class _TicketsViewState extends State<TicketsView> {
             color: AppTheme.primary,
             child: ListView.separated(
               controller: _scrollController,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 160),
               itemCount:
                   viewModel.tickets.length +
                   (viewModel.isLoadMoreRunning ? 1 : 0),
@@ -175,6 +177,10 @@ class _TicketsViewState extends State<TicketsView> {
             ),
           );
         },
+      ),
+      bottomNavigationBar: const Padding(
+        padding: EdgeInsets.only(bottom: 90),
+        child: BannerAdWidget(),
       ),
     );
   }

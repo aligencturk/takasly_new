@@ -9,6 +9,7 @@ import '../widgets/product_card.dart';
 import '../products/product_detail_view.dart';
 import '../../models/search/popular_category_model.dart';
 import 'widgets/search_filter_bottom_sheet.dart';
+import '../widgets/ads/banner_ad_widget.dart';
 
 class SearchView extends StatefulWidget {
   const SearchView({super.key});
@@ -415,43 +416,122 @@ class _SearchViewState extends State<SearchView> {
                     ],
                   ),
                 ),
+
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 10,
                   ),
-                  sliver: SliverGrid(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 0.65,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                        ),
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final product = viewModel.products[index];
-                      return ProductCard(
-                        product: product,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ChangeNotifierProvider(
-                                create: (_) => ProductDetailViewModel(),
-                                child: ProductDetailView(
-                                  productId: product.productID!,
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        const int kCycleSize = 3; // Row, Row, Banner
+
+                        // Check if it's a Banner Slot
+                        if ((index + 1) % kCycleSize == 0) {
+                          return const Padding(
+                            padding: EdgeInsets.only(bottom: 16),
+                            child: BannerAdWidget(),
+                          );
+                        }
+
+                        // Calculate Product Row
+                        final int bannersBefore = (index + 1) ~/ kCycleSize;
+                        final int productRowsBefore = index - bannersBefore;
+                        final int startProductIndex = productRowsBefore * 2;
+
+                        if (startProductIndex >= viewModel.products.length) {
+                          return null;
+                        }
+
+                        final firstProduct =
+                            viewModel.products[startProductIndex];
+                        final secondProduct =
+                            (startProductIndex + 1 < viewModel.products.length)
+                            ? viewModel.products[startProductIndex + 1]
+                            : null;
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: AspectRatio(
+                                  aspectRatio: 0.65,
+                                  child: ProductCard(
+                                    product: firstProduct,
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              ChangeNotifierProvider(
+                                                create: (_) =>
+                                                    ProductDetailViewModel(),
+                                                child: ProductDetailView(
+                                                  productId:
+                                                      firstProduct.productID!,
+                                                ),
+                                              ),
+                                        ),
+                                      );
+                                    },
+                                    onFavoritePressed: () {
+                                      if (firstProduct.productID != null) {
+                                        viewModel.toggleFavorite(
+                                          firstProduct.productID!,
+                                        );
+                                      }
+                                    },
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
-                        },
-                        onFavoritePressed: () {
-                          if (product.productID != null) {
-                            viewModel.toggleFavorite(product.productID!);
-                          }
-                        },
-                      );
-                    }, childCount: viewModel.products.length),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: secondProduct != null
+                                    ? AspectRatio(
+                                        aspectRatio: 0.65,
+                                        child: ProductCard(
+                                          product: secondProduct,
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    ChangeNotifierProvider(
+                                                      create: (_) =>
+                                                          ProductDetailViewModel(),
+                                                      child: ProductDetailView(
+                                                        productId: secondProduct
+                                                            .productID!,
+                                                      ),
+                                                    ),
+                                              ),
+                                            );
+                                          },
+                                          onFavoritePressed: () {
+                                            if (secondProduct.productID !=
+                                                null) {
+                                              viewModel.toggleFavorite(
+                                                secondProduct.productID!,
+                                              );
+                                            }
+                                          },
+                                        ),
+                                      )
+                                    : const SizedBox(),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      childCount: (() {
+                        final productCount = viewModel.products.length;
+                        final rowCount = (productCount / 2).ceil();
+                        final bannerCount = rowCount ~/ 2;
+                        return rowCount + bannerCount;
+                      })(),
+                    ),
                   ),
                 ),
                 if (viewModel.isLoadMoreRunning)

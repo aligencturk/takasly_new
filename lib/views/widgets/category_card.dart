@@ -6,8 +6,14 @@ import '../../theme/app_theme.dart';
 class CategoryCard extends StatelessWidget {
   final Category category;
   final VoidCallback? onTap;
+  final bool isSelected;
 
-  const CategoryCard({super.key, required this.category, this.onTap});
+  const CategoryCard({
+    super.key,
+    required this.category,
+    this.onTap,
+    this.isSelected = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +38,7 @@ class CategoryCard extends StatelessWidget {
                   child: Icon(
                     Icons.category_outlined,
                     size: 20,
-                    color: Colors.grey[300],
+                    color: isSelected ? AppTheme.primary : Colors.grey[300],
                   ),
                 ),
                 errorBuilder: (context, error, stackTrace) => Container(
@@ -41,10 +47,10 @@ class CategoryCard extends StatelessWidget {
                     color: Colors.grey[100],
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.error_outline,
                     size: 20,
-                    color: Colors.grey,
+                    color: isSelected ? AppTheme.primary : Colors.grey,
                   ),
                 ),
               ),
@@ -57,12 +63,22 @@ class CategoryCard extends StatelessWidget {
               textAlign: TextAlign.center,
               style: AppTheme.safePoppins(
                 fontSize: 9,
-                fontWeight: FontWeight.w500,
-                color: AppTheme.textPrimary,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? AppTheme.primary : AppTheme.textPrimary,
               ),
-              maxLines: 2,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
+            if (isSelected)
+              Container(
+                margin: const EdgeInsets.only(top: 4),
+                width: 4,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppTheme.primary,
+                  shape: BoxShape.circle,
+                ),
+              ),
           ],
         ),
       ),

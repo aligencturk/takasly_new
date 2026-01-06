@@ -425,7 +425,7 @@ class _HomeViewState extends State<HomeView> {
                               // Categories
                               SliverToBoxAdapter(
                                 child: SizedBox(
-                                  height: 90,
+                                  height: 106,
                                   child:
                                       homeViewModel.categories.isEmpty &&
                                           homeViewModel.isCategoriesLoading
@@ -446,10 +446,14 @@ class _HomeViewState extends State<HomeView> {
                                                         .length +
                                                     1, // +1 for 'Tümü'
                                           separatorBuilder: (c, i) =>
-                                              const SizedBox(width: 0),
+                                              const SizedBox(width: 8),
                                           itemBuilder: (context, index) {
                                             if (index == 0) {
                                               // 'Tümü' (All) Static Item
+                                              final isAllSelected =
+                                                  productViewModel
+                                                      .selectedCategoryId ==
+                                                  0;
                                               return GestureDetector(
                                                 onTap: () {
                                                   productViewModel
@@ -468,8 +472,6 @@ class _HomeViewState extends State<HomeView> {
                                                                   .primary,
                                                               shape: BoxShape
                                                                   .circle,
-                                                              boxShadow: AppTheme
-                                                                  .cardShadow,
                                                             ),
                                                         child: const Icon(
                                                           Icons.grid_view,
@@ -481,16 +483,34 @@ class _HomeViewState extends State<HomeView> {
                                                         'Tümü',
                                                         textAlign:
                                                             TextAlign.center,
-                                                        style:
-                                                            AppTheme.safePoppins(
-                                                              fontSize: 10,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w600,
-                                                              color: AppTheme
-                                                                  .textPrimary,
-                                                            ),
+                                                        style: AppTheme.safePoppins(
+                                                          fontSize: 10,
+                                                          fontWeight:
+                                                              isAllSelected
+                                                              ? FontWeight.w700
+                                                              : FontWeight.w600,
+                                                          color: isAllSelected
+                                                              ? AppTheme.primary
+                                                              : AppTheme
+                                                                    .textPrimary,
+                                                        ),
                                                       ),
+                                                      if (isAllSelected)
+                                                        Container(
+                                                          margin:
+                                                              const EdgeInsets.only(
+                                                                top: 4,
+                                                              ),
+                                                          width: 4,
+                                                          height: 4,
+                                                          decoration:
+                                                              const BoxDecoration(
+                                                                color: AppTheme
+                                                                    .primary,
+                                                                shape: BoxShape
+                                                                    .circle,
+                                                              ),
+                                                        ),
                                                     ],
                                                   ),
                                                 ),
@@ -498,8 +518,13 @@ class _HomeViewState extends State<HomeView> {
                                             }
                                             final category = homeViewModel
                                                 .categories[index - 1];
+                                            final isSelected =
+                                                productViewModel
+                                                    .selectedCategoryId ==
+                                                category.catID;
                                             return CategoryCard(
                                               category: category,
+                                              isSelected: isSelected,
                                               onTap: () {
                                                 productViewModel
                                                     .filterByCategory(

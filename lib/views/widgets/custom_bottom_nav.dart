@@ -47,7 +47,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
         ),
         // The Floating Center Item
         Positioned(
-          top: -30, // Raise it above the bar
+          top: -20, // Raise it above the bar
           child: _buildCenterItem(2, Icons.swap_horiz_rounded, 'İlan Ekle'),
         ),
       ],
