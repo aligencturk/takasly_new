@@ -263,7 +263,12 @@ class _RegisterViewState extends State<RegisterView> {
           controller: controller,
           obscureText: obscureText,
           keyboardType: keyboardType,
-
+          textCapitalization:
+              (keyboardType == TextInputType.emailAddress ||
+                  keyboardType == TextInputType.phone ||
+                  obscureText)
+              ? TextCapitalization.none
+              : TextCapitalization.sentences,
           decoration: InputDecoration(hintText: hint, prefixIcon: Icon(icon)),
         ),
       ],

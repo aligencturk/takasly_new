@@ -178,6 +178,8 @@ class _SearchViewState extends State<SearchView> {
                                               FocusScope.of(context).unfocus();
                                               _performSearch(val);
                                             },
+                                            textCapitalization:
+                                                TextCapitalization.sentences,
                                             style: AppTheme.safePoppins(
                                               fontSize: 15,
                                               fontWeight: FontWeight.w500,

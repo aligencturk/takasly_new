@@ -126,6 +126,7 @@ class _ChatViewState extends State<ChatView> {
           decoration: const InputDecoration(
             hintText: "Raporlama sebebinizi yazın...",
           ),
+          textCapitalization: TextCapitalization.sentences,
           maxLines: 3,
         ),
         actions: [
@@ -975,6 +976,7 @@ class _ChatViewState extends State<ChatView> {
                         labelText: "Buluşma Yeri",
                         hintText: "Örn: İstanbul / Kadıköy",
                       ),
+                      textCapitalization: TextCapitalization.sentences,
                     ),
                   ],
                 ],
@@ -1100,6 +1102,7 @@ class _ChatViewState extends State<ChatView> {
                     vertical: 12,
                   ),
                 ),
+                textCapitalization: TextCapitalization.sentences,
                 maxLines: null,
               ),
             ),

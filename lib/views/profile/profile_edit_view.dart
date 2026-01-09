@@ -366,6 +366,11 @@ class _ProfileEditViewState extends State<ProfileEditView> {
             fontWeight: FontWeight.w500,
             color: AppTheme.textPrimary,
           ),
+          textCapitalization:
+              (type == TextInputType.emailAddress ||
+                  type == TextInputType.phone)
+              ? TextCapitalization.none
+              : TextCapitalization.sentences,
           decoration: InputDecoration(
             hintText: "$label giriniz",
             hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),

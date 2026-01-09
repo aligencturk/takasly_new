@@ -613,6 +613,7 @@ class _CategoryPickerView<T> extends HookWidget {
                 child: TextField(
                   controller: searchController,
                   onChanged: (val) => searchQuery.value = val,
+                  textCapitalization: TextCapitalization.sentences,
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 16,
@@ -1216,6 +1217,7 @@ class _SearchablePicker<T> extends HookWidget {
               child: TextField(
                 controller: searchController,
                 onChanged: (val) => searchQuery.value = val,
+                textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
                   hintText: 'Ara...',
                   icon: Icon(Icons.search_rounded, color: Colors.grey[400]),
@@ -1393,6 +1395,7 @@ class _CustomTextField extends StatelessWidget {
                     textInputAction: textInputAction,
                     onSubmitted: onSubmitted,
                     autofocus: autofocus,
+                    textCapitalization: TextCapitalization.sentences,
                     scrollPadding: const EdgeInsets.only(bottom: 150),
                     keyboardType:
                         keyboardType ??
