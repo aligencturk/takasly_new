@@ -122,16 +122,32 @@ class ProductService {
     }
   }
 
-  Future<void> addProduct(AddProductRequestModel request, int userId) async {
+  Future<int?> addProduct(AddProductRequestModel request, int userId) async {
     try {
       final fields = request.toFields();
       final files = await request.toFiles();
 
-      await _apiService.postMultipart(
+      final response = await _apiService.postMultipart(
         '${ApiConstants.addProduct}$userId/addProduct',
         fields: fields,
         files: files,
       );
+
+      if (response != null && response is Map) {
+        // Try to parse productID from response
+        // Common patterns: response['data']['productID'] or response['productID']
+        if (response['data'] != null && response['data'] is Map) {
+          final data = response['data'];
+          if (data['productID'] != null) {
+            return int.tryParse(data['productID'].toString());
+          }
+        }
+        // Fallback if it's top level (less likely for this structure but possible)
+        if (response['productID'] != null) {
+          return int.tryParse(response['productID'].toString());
+        }
+      }
+      return null;
     } catch (e) {
       rethrow;
     }
@@ -164,7 +180,7 @@ class ProductService {
   ) async {
     try {
       final payload = {"userToken": userToken, "productID": productId};
-      await _apiService.post(
+      await _apiService.delete(
         '${ApiConstants.deleteProduct}$userId/deleteProduct',
         payload,
       );
@@ -175,7 +191,10 @@ class ProductService {
 
   Future<String?> sponsorProduct(String userToken, int productId) async {
     try {
-      final payload = {"userToken": userToken, "productID": productId};
+      final payload = {
+        "userToken": userToken,
+        "productID": productId.toString(),
+      };
       final response = await _apiService.post(
         ApiConstants.sponsorEdit,
         payload,

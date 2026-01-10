@@ -390,8 +390,8 @@ class AddProductViewModel extends ChangeNotifier {
   }
 
   // Submission
-  Future<bool> submitProduct(String userToken, int userId) async {
-    if (!_validate()) return false;
+  Future<int?> submitProduct(String userToken, int userId) async {
+    if (!_validate()) return null;
 
     isLoading = true;
     errorMessage = null;
@@ -414,8 +414,8 @@ class AddProductViewModel extends ChangeNotifier {
         isShowContact: isShowContact ? 1 : 0,
       );
 
-      await _productService.addProduct(request, userId);
-      return true;
+      final productId = await _productService.addProduct(request, userId);
+      return productId;
     } catch (e) {
       _logger.e("Submit error: $e");
       if (e is BusinessException) {
@@ -423,6 +423,22 @@ class AddProductViewModel extends ChangeNotifier {
       } else {
         errorMessage = "Ürün yüklenirken bir hata oluştu: $e";
       }
+      return null;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> sponsorProduct(String userToken, int productId) async {
+    isLoading = true;
+    notifyListeners();
+    try {
+      await _productService.sponsorProduct(userToken, productId);
+      return true;
+    } catch (e) {
+      _logger.e("Sponsor error: $e");
+      errorMessage = "Ürün öne çıkarılırken hata oluştu: $e";
       return false;
     } finally {
       isLoading = false;

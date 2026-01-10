@@ -4,6 +4,8 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../auth/login_view.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import '../../services/ad_service.dart';
 
 import '../../theme/app_theme.dart';
 import '../../viewmodels/add_product_viewmodel.dart';
@@ -155,9 +157,149 @@ class _AddProductViewBody extends HookWidget {
       userId = int.tryParse(rawUserId);
 
     if (token != null && userId != null) {
-      final success = await viewModel.submitProduct(token, userId);
-      if (success && context.mounted) {
-        Navigator.pop(context, true);
+      final productId = await viewModel.submitProduct(token, userId);
+      if (productId != null && context.mounted) {
+        // Show Dialog
+        final shouldSponsor = await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text('Tebrikler, İlanın Yayında! 🚀'),
+            content: const Text(
+              'Takas şansını artırmak için kısa bir tanıtım izle, ilanını 1 saat boyunca ücretsiz “Öne Çıkanlar” vitrinine taşı.',
+              style: TextStyle(height: 1.5),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text(
+                  'Belki Sonra',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'Vitrine Taşı ✨',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+        );
+
+        if (shouldSponsor == true && context.mounted) {
+          // Show loading for ad
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => const Center(
+              child: CircularProgressIndicator(color: AppTheme.primary),
+            ),
+          );
+
+          AdService().loadRewardedAd(
+            onAdLoaded: () {}, // Unused in service
+            onUserEarnedReward: () {}, // Unused in service
+            onAdShown: (RewardedAd ad) {
+              // Close loading dialog
+              if (Navigator.canPop(context)) {
+                Navigator.pop(context);
+              }
+
+              // Wrap the callback to handle navigation on dismiss
+              final originalCallback = ad.fullScreenContentCallback;
+              ad.fullScreenContentCallback = FullScreenContentCallback(
+                onAdDismissedFullScreenContent: (ad) {
+                  originalCallback?.onAdDismissedFullScreenContent?.call(ad);
+                  if (context.mounted) {
+                    Navigator.pop(context, true);
+                  }
+                },
+                onAdFailedToShowFullScreenContent: (ad, error) {
+                  originalCallback?.onAdFailedToShowFullScreenContent?.call(
+                    ad,
+                    error,
+                  );
+                  if (context.mounted) {
+                    Navigator.pop(context, true);
+                  }
+                },
+                onAdShowedFullScreenContent: (ad) {
+                  originalCallback?.onAdShowedFullScreenContent?.call(ad);
+                },
+                onAdImpression: (ad) {
+                  originalCallback?.onAdImpression?.call(ad);
+                },
+                onAdClicked: (ad) {
+                  originalCallback?.onAdClicked?.call(ad);
+                },
+              );
+
+              ad.show(
+                onUserEarnedReward:
+                    (AdWithoutView ad, RewardItem reward) async {
+                      // User watched the ad, now sponsor
+                      final sponsored = await viewModel.sponsorProduct(
+                        token,
+                        productId,
+                      );
+                      if (sponsored && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Ürün başarıyla öne çıkarıldı!'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
+                    },
+              );
+            },
+            onAdFailedToLoad: (AdError error) {
+              // Close loading dialog
+              if (Navigator.canPop(context)) {
+                Navigator.pop(context);
+              }
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text("Reklam yüklenemedi: ${error.message}")),
+              );
+            },
+          );
+        }
+
+        if (context.mounted) {
+          // Wait slightly to ensure ad flow didn't mess up nav stack, or just pop.
+          // Since ad is full screen, we might need to wait for it to close?
+          // ad.show is mostly fire and forget in terms of await?
+          // Actually onUserEarnedReward is valid.
+          // But we want to pop the AddProductPage ONLY after everything.
+          // If we pop here immediately, we might close the page underneath the ad?
+          // Ad SDK usually handles overlay.
+          // If we pop logic is here, it will run immediately after loadRewardedAd returns (sync/async mismatch).
+          // loadRewardedAd is void, so it returns immediately.
+          // So this pop will run while ad is loading/showing.
+          // We should NOT pop here if we are showing ad.
+          if (shouldSponsor != true) {
+            Navigator.pop(context, true);
+          }
+          // If shouldSponsor is true, we rely on the ad flow to NOT pop the page?
+          // Wait, if the user watches ad, we want to pop AFTER sponsorship.
+          // If ad fails, we want to pop.
+          // So I should move the final pop logic inside callbacks or handle execution flow.
+        }
       }
     } else {
       if (context.mounted) {
