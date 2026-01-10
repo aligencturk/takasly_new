@@ -32,7 +32,10 @@ class SearchViewModel extends ChangeNotifier {
   List<City> cities = [];
   List<District> districts = [];
   List<Condition> conditions = [];
-  List<Category> categories = []; // For filter selection if needed
+  List<Category> categories = []; // Top level categories
+  List<Category> subCategories = []; // Subcategories for selection
+
+  Category? selectedCategory; // Currently selected category in filter
 
   City? selectedCity;
   District? selectedDistrict;
@@ -100,7 +103,14 @@ class SearchViewModel extends ChangeNotifier {
       final response = await _generalService.getCategories(parentId);
       if (response['success'] == true && response['data'] != null) {
         final List cats = response['data']['categories'];
-        categories = cats.map((e) => Category.fromJson(e)).toList();
+        final parsedCats = cats.map((e) => Category.fromJson(e)).toList();
+
+        if (parentId == 0) {
+          categories = parsedCats;
+        } else {
+          subCategories = parsedCats;
+        }
+        notifyListeners();
       }
     } catch (e) {
       _logger.e('Error fetching categories: $e');
@@ -108,7 +118,17 @@ class SearchViewModel extends ChangeNotifier {
   }
 
   // Filter Management Methods
-  void setCategoryFilter(int categoryId, String categoryName) {
+  void setSelectedCategory(Category? category) {
+    selectedCategory = category;
+    subCategories = []; // Reset subcategories
+    if (category?.catID != null) {
+      // If we selected a category, fetch its subcategories
+      fetchCategories(category!.catID);
+    }
+    notifyListeners();
+  }
+
+  void setCategoryFilter(int? categoryId, String? categoryName) {
     _currentCategoryId = categoryId;
     _currentCategoryName = categoryName;
     notifyListeners();
@@ -373,6 +393,9 @@ class SearchViewModel extends ChangeNotifier {
     districts = [];
     selectedConditionIds = [];
     sortType = 'default';
+
+    selectedCategory = null;
+    subCategories = [];
 
     products = [];
     errorMessage = null;

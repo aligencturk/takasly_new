@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import '../../../viewmodels/search_viewmodel.dart';
-import '../../../theme/app_theme.dart'; // We can reuse this if adaptable, or just category selector logic
+import '../../../theme/app_theme.dart';
+import 'search_category_selection_sheet.dart';
 
 class SearchFilterBottomSheet extends StatelessWidget {
   const SearchFilterBottomSheet({super.key});
@@ -175,6 +176,15 @@ class SearchFilterBottomSheet extends StatelessWidget {
                           flex: 2,
                           child: ElevatedButton(
                             onPressed: () {
+                              if (searchVM.selectedCategory != null) {
+                                searchVM.setCategoryFilter(
+                                  searchVM.selectedCategory!.catID,
+                                  searchVM.selectedCategory!.catName,
+                                );
+                              } else {
+                                // Clear category filter if none selected (or explicitly cleared)
+                                searchVM.setCategoryFilter(null, null);
+                              }
                               searchVM.applyFilters();
                               Navigator.pop(context);
                             },
@@ -263,50 +273,64 @@ class SearchFilterBottomSheet extends StatelessWidget {
   }
 
   Widget _buildCategorySelector(BuildContext context, SearchViewModel vm) {
-    return GestureDetector(
+    return InkWell(
       onTap: () {
-        int initialIndex = 0;
-        if (vm.currentCategoryName != null) {
-          initialIndex = vm.categories.indexWhere(
-            (c) => c.catName == vm.currentCategoryName,
-          );
-          if (initialIndex == -1) initialIndex = 0;
-        }
-
-        _showPicker(
-          context,
-          title: 'Kategori Seç',
-          items: vm.categories.map((e) => e.catName).toList(),
-          initialIndex: initialIndex,
-          onSelectedItemChanged: (index) {
-            if (index >= 0 && index < vm.categories.length) {
-              final cat = vm.categories[index];
-              vm.setCategoryFilter(cat.catID, cat.catName);
-            }
-          },
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => const SearchCategorySelectionSheet(),
         );
       },
+      borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey[300]!),
+          color: Colors.grey[50],
+          border: Border.all(color: Colors.grey[200]!),
           borderRadius: BorderRadius.circular(12),
-          color: Colors.white,
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              vm.currentCategoryName ?? "Kategori Seçiniz",
-              style: AppTheme.safePoppins(
-                color: vm.currentCategoryName != null
-                    ? AppTheme.textPrimary
-                    : AppTheme.textSecondary,
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.grey[100]!),
+              ),
+              child: Icon(
+                Icons.grid_view_rounded,
+                color: AppTheme.primary,
+                size: 20,
               ),
             ),
-            const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Seçilen Kategori',
+                    style: AppTheme.safePoppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    vm.selectedCategory?.catName ?? 'Tüm Kategoriler',
+                    style: AppTheme.safePoppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
           ],
         ),
       ),
