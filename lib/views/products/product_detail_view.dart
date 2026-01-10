@@ -15,6 +15,8 @@ import '../../viewmodels/ticket_viewmodel.dart';
 import '../profile/user_profile_view.dart';
 import 'widgets/offer_bottom_sheet.dart';
 import '../widgets/ads/banner_ad_widget.dart';
+import 'edit_product_view.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProductDetailView extends StatefulWidget {
   final int productId;
@@ -880,16 +882,87 @@ class _ProductDetailViewState extends State<ProductDetailView> {
       mainAxisSize: MainAxisSize.min,
       children: [
         const BannerAdWidget(),
-        if (!isOwner)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: AppTheme.cardShadow,
-            ),
-            child: SafeArea(
-              child: Row(
-                children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: AppTheme.cardShadow,
+          ),
+          child: SafeArea(
+            child: Row(
+              children: [
+                if (isOwner) ...[
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => EditProductView(
+                              productId: product.productID!,
+                              product: product.toProduct(),
+                            ),
+                          ),
+                        );
+                        if (result == true && context.mounted) {
+                          final userToken = context
+                              .read<AuthViewModel>()
+                              .user
+                              ?.token;
+                          context
+                              .read<ProductDetailViewModel>()
+                              .getProductDetail(
+                                product.productID!,
+                                userToken: userToken,
+                              );
+                        }
+                      },
+                      icon: const Icon(Icons.edit, size: 18),
+                      label: const Text("Düzenle"),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.primary,
+                        side: const BorderSide(
+                          color: AppTheme.primary,
+                          width: 1.5,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        textStyle: AppTheme.safePoppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _handleDeleteProduct(
+                        context,
+                        context.read<ProductDetailViewModel>(),
+                      ),
+                      icon: const Icon(Icons.delete, size: 18),
+                      label: const Text("Sil"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.redAccent,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        textStyle: AppTheme.safePoppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ] else ...[
                   if (showCallButton) ...[
                     Expanded(
                       child: OutlinedButton.icon(
@@ -938,9 +1011,10 @@ class _ProductDetailViewState extends State<ProductDetailView> {
                     ),
                   ),
                 ],
-              ),
+              ],
             ),
           ),
+        ),
       ],
     );
   }
@@ -997,6 +1071,56 @@ class _ProductDetailViewState extends State<ProductDetailView> {
         );
       },
     );
+  }
+
+  Future<void> _handleDeleteProduct(
+    BuildContext context,
+    ProductDetailViewModel viewModel,
+  ) async {
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('İlanı Sil'),
+        content: const Text(
+          'Bu ilanı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('VAZGEÇ'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'SİL',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('userToken');
+    int? userId;
+    final dynamic rawUserId = prefs.get('userID');
+    if (rawUserId is int) {
+      userId = rawUserId;
+    } else if (rawUserId is String) {
+      userId = int.tryParse(rawUserId);
+    }
+
+    if (token != null && userId != null) {
+      final success = await viewModel.deleteProduct(token, userId);
+      if (success && context.mounted) {
+        Navigator.pop(context, true);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('İlan başarıyla silindi')));
+      }
+    }
   }
 }
 

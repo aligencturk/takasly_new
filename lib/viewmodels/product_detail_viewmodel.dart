@@ -34,4 +34,28 @@ class ProductDetailViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<bool> deleteProduct(String userToken, int userId) async {
+    if (productDetail?.productID == null) return false;
+
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      await _productService.deleteProduct(
+        userToken,
+        userId,
+        productDetail!.productID!,
+      );
+      productDetail = null;
+      return true;
+    } catch (e) {
+      _logger.e('Ürün silinirken hata oluştu', error: e);
+      errorMessage = "Ürün silinemedi: $e";
+      return false;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
 }

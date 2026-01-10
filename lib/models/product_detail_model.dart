@@ -1,3 +1,5 @@
+import 'products/product_models.dart' as pm;
+
 class ProductDetailModel {
   bool? error;
   bool? success;
@@ -27,6 +29,37 @@ class ProductDetailData {
 }
 
 class ProductDetail {
+  pm.Product toProduct() {
+    return pm.Product(
+      productID: productID,
+      productCode: productCode,
+      productTitle: productTitle,
+      productDesc: productDesc,
+      productImage: productImage,
+      productCondition: productCondition,
+      categoryList: categoryList
+          ?.map((c) => pm.Category(catID: c.catID, catName: c.catName))
+          .toList(),
+      userID: userID,
+      categoryID: categoryID,
+      conditionID: conditionID,
+      cityID: cityID,
+      districtID: districtID,
+      cityTitle: cityTitle,
+      districtTitle: districtTitle,
+      productLat: productLat,
+      productLong: productLong,
+      userFullname: userFullname,
+      userFirstname: userFirstname,
+      userLastname: userLastname,
+      createdAt: createdAt,
+      isFavorite: isFavorite,
+      isSponsor: isSponsor,
+      isTrade: isTrade,
+      isShowContact: isShowContact,
+    );
+  }
+
   int? productID;
   String? productCode;
   String? productTitle;
