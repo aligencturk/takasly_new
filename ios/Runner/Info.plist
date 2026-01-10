@@ -4,6 +4,8 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>FlutterDeepLinkingEnabled</key>
+	<false/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -87,6 +89,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>com.googleusercontent.apps.422264804561-llio284tijfqkh873at3ci09fna2epl0</string>
+				<string>takasly</string>
 			</array>
 		</dict>
 	</array>

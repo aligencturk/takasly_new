@@ -44,53 +44,63 @@ class _HomeViewState extends State<HomeView> {
     super.initState();
     _requestNotificationPermissions();
     _scrollController.addListener(_onScroll);
-    // Fetch Data
+
+    // Fetch Data on startup
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.read<HomeViewModel>().init();
+        context.read<HomeViewModel>().init(isRefresh: true);
+
+        // Handle Product Initialization once Auth is checked
+        final authVM = context.read<AuthViewModel>();
+        if (authVM.isAuthCheckComplete) {
+          _initProducts();
+        } else {
+          // Listen for auth completion
+          authVM.addListener(_authListener);
+        }
       }
     });
+  }
+
+  void _authListener() {
+    if (!mounted) return;
+    final authVM = context.read<AuthViewModel>();
+    if (authVM.isAuthCheckComplete) {
+      authVM.removeListener(_authListener);
+      _initProducts();
+    }
+  }
+
+  void _initProducts() {
+    if (!mounted) return;
+    final authVM = context.read<AuthViewModel>();
+    final productVM = context.read<ProductViewModel>();
+
+    // Set token
+    productVM.setUserToken(authVM.user?.token, refresh: false);
+
+    // Fetch notifications
+    if (authVM.user?.userID != null) {
+      context.read<NotificationViewModel>().fetchNotifications(
+        authVM.user!.userID,
+      );
+    }
+
+    // Fetch Products
+    // If we haven't loaded yet, or if it failed/empty, load now.
+    if (productVM.products.isEmpty) {
+      productVM.init();
+    }
   }
 
   Future<void> _requestNotificationPermissions() async {
     await Permission.notification.request();
   }
 
-  bool _isInitDone = false;
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_isInitDone) return;
-
-    try {
-      final authVM = context.watch<AuthViewModel>();
-      if (authVM.isAuthCheckComplete) {
-        _isInitDone = true;
-        final productVM = context.read<ProductViewModel>();
-
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          bool isFirstInit = productVM.products.isEmpty && !productVM.isLoading;
-
-          // Sync token.
-          productVM.setUserToken(authVM.user?.token, refresh: !isFirstInit);
-
-          // Fetch notifications if user is logged in
-          if (authVM.user?.userID != null) {
-            context.read<NotificationViewModel>().fetchNotifications(
-              authVM.user!.userID,
-            );
-          }
-
-          // If products are not loaded yet, call init() which handles Location + Fetch
-          if (isFirstInit) {
-            productVM.init();
-          }
-        });
-      }
-    } catch (e) {
-      // In case providers are not ready
-    }
+    // Logic moved to initState/_authListener
   }
 
   @override
@@ -566,8 +576,8 @@ class _HomeViewState extends State<HomeView> {
                                             aspectRatio: 0.65,
                                             child: ProductCard(
                                               product: firstProduct,
-                                              onTap: () {
-                                                Navigator.push(
+                                              onTap: () async {
+                                                await Navigator.push(
                                                   context,
                                                   MaterialPageRoute(
                                                     builder: (context) =>
@@ -582,6 +592,14 @@ class _HomeViewState extends State<HomeView> {
                                                         ),
                                                   ),
                                                 );
+                                                // Refresh products when returning from detail
+                                                if (context.mounted) {
+                                                  context
+                                                      .read<ProductViewModel>()
+                                                      .fetchProducts(
+                                                        isRefresh: true,
+                                                      );
+                                                }
                                               },
                                               onFavoritePressed: () {
                                                 final authVM = context
@@ -610,8 +628,8 @@ class _HomeViewState extends State<HomeView> {
                                                   aspectRatio: 0.65,
                                                   child: ProductCard(
                                                     product: secondProduct,
-                                                    onTap: () {
-                                                      Navigator.push(
+                                                    onTap: () async {
+                                                      await Navigator.push(
                                                         context,
                                                         MaterialPageRoute(
                                                           builder: (context) =>
@@ -626,6 +644,16 @@ class _HomeViewState extends State<HomeView> {
                                                               ),
                                                         ),
                                                       );
+                                                      // Refresh products when returning from detail
+                                                      if (context.mounted) {
+                                                        context
+                                                            .read<
+                                                              ProductViewModel
+                                                            >()
+                                                            .fetchProducts(
+                                                              isRefresh: true,
+                                                            );
+                                                      }
                                                     },
                                                     onFavoritePressed: () {
                                                       final authVM = context

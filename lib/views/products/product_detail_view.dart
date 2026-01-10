@@ -156,8 +156,28 @@ class _ProductDetailViewState extends State<ProductDetailView> {
             centerTitle: true,
             actions: [
               IconButton(
-                icon: const Icon(Icons.favorite_border),
-                onPressed: () {},
+                icon: Icon(
+                  (product?.isFavorite ?? false)
+                      ? Icons.favorite
+                      : Icons.favorite_border,
+                  color: (product?.isFavorite ?? false)
+                      ? Colors.red
+                      : Colors.white,
+                ),
+                onPressed: () {
+                  final userToken = context.read<AuthViewModel>().user?.token;
+                  if (userToken != null) {
+                    viewModel.toggleFavorite(userToken);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Favorilere eklemek için giriş yapmalısınız',
+                        ),
+                      ),
+                    );
+                  }
+                },
               ),
               IconButton(
                 icon: const Icon(Icons.share),

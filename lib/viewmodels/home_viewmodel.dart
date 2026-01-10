@@ -64,12 +64,20 @@ class HomeViewModel extends ChangeNotifier {
 
     try {
       // 1. Fetch critical metadata in parallel
-      // We pass isRefresh to allow forced category fetching
+      // We wrap each in a catch block so one failure doesn't stop the others
       await Future.wait([
-        fetchLogos(),
-        fetchCategories(0, isRefresh),
-        fetchCities(),
-        fetchConditions(),
+        fetchLogos().catchError((e) {
+          _logger.w('Logos fetch failed: $e');
+        }),
+        fetchCategories(0, isRefresh).catchError((e) {
+          _logger.e('Categories fetch failed: $e');
+        }),
+        fetchCities().catchError((e) {
+          _logger.w('Cities fetch failed: $e');
+        }),
+        fetchConditions().catchError((e) {
+          _logger.w('Conditions fetch failed: $e');
+        }),
       ]);
 
       // Basic data is ready, stop the main skeleton/loader

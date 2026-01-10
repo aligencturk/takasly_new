@@ -58,4 +58,34 @@ class ProductDetailViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> toggleFavorite(String userToken) async {
+    if (productDetail?.productID == null) return;
+
+    // Capture old state for rollback
+    final oldState = productDetail?.isFavorite;
+    // Optimistic update
+    productDetail?.isFavorite = !(oldState ?? false);
+    notifyListeners();
+
+    try {
+      if (productDetail?.isFavorite == true) {
+        await _productService.addFavorite(userToken, productDetail!.productID!);
+      } else {
+        await _productService.removeFavoriteProduct(
+          userToken,
+          productDetail!.productID!,
+        );
+      }
+      _logger.i(
+        'Favorite status updated for product ${productDetail!.productID}',
+      );
+    } catch (e) {
+      // Revert on failure
+      productDetail?.isFavorite = oldState;
+      _logger.e('Failed to toggle favorite', error: e);
+      errorMessage = "Favori işlemi başarısız oldu.";
+      notifyListeners();
+    }
+  }
 }

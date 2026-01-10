@@ -577,14 +577,23 @@ class _UserProfileViewState extends State<UserProfileView>
         final product = _mapProfileProductToProduct(products[index]);
         return ProductCard(
           product: product,
-          onTap: () {
-            Navigator.push(
+          onTap: () async {
+            await Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (_) =>
                     ProductDetailView(productId: product.productID!),
               ),
             );
+            if (context.mounted) {
+              final authVM = Provider.of<AuthViewModel>(context, listen: false);
+              final userToken = authVM.user?.token;
+
+              Provider.of<ProfileViewModel>(
+                context,
+                listen: false,
+              ).getProfileDetail(widget.userId, userToken);
+            }
           },
         );
       },

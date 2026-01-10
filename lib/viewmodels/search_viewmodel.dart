@@ -64,6 +64,10 @@ class SearchViewModel extends ChangeNotifier {
     ]);
   }
 
+  Future<void> refresh() async {
+    await _performSearchRequest(isRefresh: true);
+  }
+
   Future<String?> _getUserToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('userToken');

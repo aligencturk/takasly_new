@@ -15,7 +15,8 @@ import '../../viewmodels/auth_viewmodel.dart';
 import '../products/add_product_view.dart';
 
 class SearchView extends StatefulWidget {
-  const SearchView({super.key});
+  final String? initialQuery; // Add initialQuery
+  const SearchView({super.key, this.initialQuery});
 
   @override
   State<SearchView> createState() => _SearchViewState();
@@ -29,9 +30,44 @@ class _SearchViewState extends State<SearchView> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<SearchViewModel>().init();
-    });
+
+    // Handle initial query if present
+    if (widget.initialQuery != null && widget.initialQuery!.isNotEmpty) {
+      _searchController.text = widget.initialQuery!;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        // Initialize and then search
+        context.read<SearchViewModel>().init().then((_) async {
+          await _performSearch(widget.initialQuery!);
+
+          // Auto-open if exactly one result and came from deep link (initialQuery set)
+          if (mounted) {
+            final vm = context.read<SearchViewModel>();
+            if (vm.products.length == 1) {
+              final product = vm.products.first;
+
+              // Small delay to ensure UI builds before navigating
+              await Future.delayed(const Duration(milliseconds: 100));
+
+              if (mounted && product.productID != null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ChangeNotifierProvider(
+                      create: (_) => ProductDetailViewModel(),
+                      child: ProductDetailView(productId: product.productID!),
+                    ),
+                  ),
+                );
+              }
+            }
+          }
+        });
+      });
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<SearchViewModel>().init();
+      });
+    }
   }
 
   @override
@@ -48,9 +84,9 @@ class _SearchViewState extends State<SearchView> {
     }
   }
 
-  void _performSearch(String query) {
+  Future<void> _performSearch(String query) async {
     if (query.trim().isNotEmpty) {
-      context.read<SearchViewModel>().search(query);
+      await context.read<SearchViewModel>().search(query);
     }
   }
 
@@ -481,8 +517,8 @@ class _SearchViewState extends State<SearchView> {
                                   aspectRatio: 0.65,
                                   child: ProductCard(
                                     product: firstProduct,
-                                    onTap: () {
-                                      Navigator.push(
+                                    onTap: () async {
+                                      await Navigator.push(
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) =>
@@ -496,6 +532,11 @@ class _SearchViewState extends State<SearchView> {
                                               ),
                                         ),
                                       );
+                                      if (context.mounted) {
+                                        context
+                                            .read<SearchViewModel>()
+                                            .refresh();
+                                      }
                                     },
                                     onFavoritePressed: () {
                                       final authVM = context
@@ -526,8 +567,8 @@ class _SearchViewState extends State<SearchView> {
                                         aspectRatio: 0.65,
                                         child: ProductCard(
                                           product: secondProduct,
-                                          onTap: () {
-                                            Navigator.push(
+                                          onTap: () async {
+                                            await Navigator.push(
                                               context,
                                               MaterialPageRoute(
                                                 builder: (context) =>
@@ -541,6 +582,11 @@ class _SearchViewState extends State<SearchView> {
                                                     ),
                                               ),
                                             );
+                                            if (context.mounted) {
+                                              context
+                                                  .read<SearchViewModel>()
+                                                  .refresh();
+                                            }
                                           },
                                           onFavoritePressed: () {
                                             final authVM = context

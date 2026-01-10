@@ -25,6 +25,25 @@ class ProductService {
     }
   }
 
+  /// Helper to find a product ID by its code or title slug search
+  Future<Product?> getProductByCode(String code) async {
+    try {
+      // We use the search endpoint, assuming searching by code returns the unique product
+      final request = ProductRequestModel(searchText: code, page: 1);
+
+      final result = await getAllProducts(request);
+      if (result.success == true &&
+          result.data?.products != null &&
+          result.data!.products!.isNotEmpty) {
+        // Return the first match
+        return result.data!.products!.first;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   Future<ProductDetailModel> getProductDetail(
     int productId, {
     String? userToken,

@@ -104,14 +104,17 @@ class _ChatViewState extends State<ChatView> {
     super.dispose();
   }
 
-  void _navigateToProduct(int? productId) {
+  Future<void> _navigateToProduct(int? productId) async {
     if (productId != null) {
-      Navigator.push(
+      await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => ProductDetailView(productId: productId),
         ),
       );
+      if (mounted) {
+        _fetchTicketDetail();
+      }
     }
   }
 

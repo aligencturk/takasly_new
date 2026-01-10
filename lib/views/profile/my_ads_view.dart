@@ -125,15 +125,30 @@ class _MyAdsViewState extends State<MyAdsView> {
 
         return ProductCard(
           product: product,
-          onTap: () {
+          onTap: () async {
             if (product.productID != null) {
-              Navigator.push(
+              await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) =>
                       ProductDetailView(productId: product.productID!),
                 ),
               );
+              if (context.mounted) {
+                final authVM = Provider.of<AuthViewModel>(
+                  context,
+                  listen: false,
+                );
+                final userId = authVM.user?.userID;
+                final userToken = authVM.user?.token;
+
+                if (userId != null) {
+                  Provider.of<ProfileViewModel>(
+                    context,
+                    listen: false,
+                  ).getProfileDetail(userId, userToken);
+                }
+              }
             }
           },
           onEdit: () async {

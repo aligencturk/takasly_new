@@ -135,8 +135,12 @@ class FirebaseMessagingService {
       }
 
       // 6. Token refresh and Token Log
-      final token = await _firebaseMessaging.getToken();
-      if (token != null) developer.log('🔑 FCM Token: $token', name: 'FCM');
+      try {
+        final token = await getToken();
+        if (token != null) developer.log('🔑 FCM Token: $token', name: 'FCM');
+      } catch (e) {
+        developer.log('⚠️ Could not get initial FCM token: $e', name: 'FCM');
+      }
 
       FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
         developer.log('🔄 FCM Token refreshed: $newToken', name: 'FCM');
@@ -159,6 +163,16 @@ class FirebaseMessagingService {
   /// Subscribe to a topic using userId (String)
   static Future<void> subscribeToUserTopic(String userId) async {
     try {
+      if (Platform.isIOS) {
+        final apnsToken = await _firebaseMessaging.getAPNSToken();
+        if (apnsToken == null) {
+          developer.log(
+            '⚠️ APNS token not ready, skipping subscription: $userId',
+            name: 'FCM',
+          );
+          return;
+        }
+      }
       // Backend expects topic to be just the user ID string
       await _firebaseMessaging.subscribeToTopic(userId);
       developer.log('📌 Subscribed to topic: $userId', name: 'FCM');
@@ -170,6 +184,10 @@ class FirebaseMessagingService {
   /// Unsubscribe from a topic
   static Future<void> unsubscribeFromUserTopic(String userId) async {
     try {
+      if (Platform.isIOS) {
+        final apnsToken = await _firebaseMessaging.getAPNSToken();
+        if (apnsToken == null) return;
+      }
       await _firebaseMessaging.unsubscribeFromTopic(userId);
       developer.log('📌 Unsubscribed from topic: $userId', name: 'FCM');
     } catch (e) {
@@ -180,8 +198,24 @@ class FirebaseMessagingService {
     }
   }
 
-  static Future<String?> getToken() async =>
-      await _firebaseMessaging.getToken();
+  static Future<String?> getToken() async {
+    try {
+      if (Platform.isIOS) {
+        final apnsToken = await _firebaseMessaging.getAPNSToken();
+        if (apnsToken == null) {
+          developer.log(
+            '⚠️ APNS token has not been received yet. FCM token cannot be retrieved.',
+            name: 'FCM',
+          );
+          return null;
+        }
+      }
+      return await _firebaseMessaging.getToken();
+    } catch (e) {
+      developer.log('❌ Error getting FCM token: $e', name: 'FCM');
+      return null;
+    }
+  }
 
   static void _handleMessageNavigation(RemoteMessage message) {
     _processNavigation(message.data, message.notification?.title);

@@ -23,6 +23,7 @@ import 'services/firebase_messaging_service.dart';
 import 'services/navigation_service.dart';
 
 import 'services/ad_service.dart';
+import 'services/deep_link_service.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -42,8 +43,21 @@ void main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // DeepLinkService().init(); // Temporarily disabled for development flow
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

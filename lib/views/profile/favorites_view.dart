@@ -142,8 +142,8 @@ class _FavoritesViewContentState extends State<_FavoritesViewContent> {
               final product = viewModel.favorites[index];
               return ProductCard(
                 product: product,
-                onTap: () {
-                  Navigator.push(
+                onTap: () async {
+                  await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => ChangeNotifierProvider(
@@ -152,6 +152,14 @@ class _FavoritesViewContentState extends State<_FavoritesViewContent> {
                       ),
                     ),
                   );
+                  if (context.mounted) {
+                    final authVM = context.read<AuthViewModel>();
+                    if (authVM.user != null) {
+                      context.read<FavoritesViewModel>().fetchFavorites(
+                        authVM.user!.userID,
+                      );
+                    }
+                  }
                 },
                 onFavoritePressed: () {
                   final authVM = context.read<AuthViewModel>();
