@@ -46,7 +46,9 @@ class _HomeViewState extends State<HomeView> {
     _scrollController.addListener(_onScroll);
     // Fetch Data
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<HomeViewModel>().init();
+      if (mounted) {
+        context.read<HomeViewModel>().init();
+      }
     });
   }
 
@@ -400,9 +402,7 @@ class _HomeViewState extends State<HomeView> {
                             child:
                                 homeViewModel.categories.isEmpty &&
                                     homeViewModel.isCategoriesLoading
-                                ? const Center(
-                                    child: CircularProgressIndicator(),
-                                  )
+                                ? _buildCategorySkeleton()
                                 : ListView.separated(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 16,
@@ -501,9 +501,7 @@ class _HomeViewState extends State<HomeView> {
                         // Product List with Interspersed Banners
                         if (productViewModel.isLoading &&
                             productViewModel.products.isEmpty)
-                          const SliverFillRemaining(
-                            child: Center(child: CircularProgressIndicator()),
-                          )
+                          _buildProductListSkeleton()
                         else if (productViewModel.errorMessage != null &&
                             productViewModel.products.isEmpty)
                           SliverFillRemaining(
@@ -769,6 +767,115 @@ class _HomeViewState extends State<HomeView> {
                   fontWeight: FontWeight.w600,
                   color: Colors.white,
                 ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategorySkeleton() {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      scrollDirection: Axis.horizontal,
+      itemCount: 6,
+      itemBuilder: (context, index) {
+        return Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: Column(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                width: 50,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildProductListSkeleton() {
+    return SliverPadding(
+      padding: const EdgeInsets.all(16),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) => Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Row(
+              children: [
+                Expanded(child: _buildProductItemSkeleton()),
+                const SizedBox(width: 16),
+                Expanded(child: _buildProductItemSkeleton()),
+              ],
+            ),
+          ),
+          childCount: 3,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProductItemSkeleton() {
+    return AspectRatio(
+      aspectRatio: 0.65,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: AppTheme.borderRadius,
+          border: Border.all(color: Colors.black.withOpacity(0.05)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AspectRatio(
+              aspectRatio: 1,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.vertical(
+                    top: AppTheme.borderRadius.topLeft,
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(width: 60, height: 8, color: Colors.grey[100]),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    height: 12,
+                    color: Colors.grey[100],
+                  ),
+                  const SizedBox(height: 4),
+                  Container(width: 100, height: 12, color: Colors.grey[100]),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Container(width: 12, height: 12, color: Colors.grey[100]),
+                      const SizedBox(width: 4),
+                      Container(width: 80, height: 8, color: Colors.grey[100]),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],

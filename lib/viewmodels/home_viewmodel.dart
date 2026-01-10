@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../services/general_service.dart';
-import '../services/cache_service.dart';
 import '../models/products/product_models.dart';
 import '../models/home/home_models.dart';
 import '../models/general_models.dart';
@@ -10,10 +9,9 @@ import 'package:geocoding/geocoding.dart';
 
 class HomeViewModel extends ChangeNotifier {
   final GeneralService _generalService = GeneralService();
-  final CacheService _cacheService = CacheService();
   final Logger _logger = Logger();
 
-  bool _isLoading = false;
+  bool _isLoading = true;
   bool get isLoading => _isLoading;
 
   String? _errorMessage;
@@ -22,7 +20,7 @@ class HomeViewModel extends ChangeNotifier {
   HomeLogos? _logos;
   HomeLogos? get logos => _logos;
 
-  bool _isCategoriesLoading = false;
+  bool _isCategoriesLoading = true;
   bool get isCategoriesLoading => _isCategoriesLoading;
 
   List<Category> _categories = [];
@@ -164,26 +162,7 @@ class HomeViewModel extends ChangeNotifier {
     _isCategoriesLoading = true;
     try {
       // If it's the root categories (parentId == 0) and not a refresh, try cache first
-      if (parentId == 0 && !isRefresh) {
-        final cached = await _cacheService.getCategories();
-        if (cached != null && cached.isNotEmpty) {
-          _categories = cached;
-          _logger.i('Loaded ${cached.length} categories from cache.');
-          notifyListeners();
-
-          // Check if cache is fresh enough (e.g., < 1 hour)
-          final lastTime = await _cacheService.getCategoriesTime();
-          if (lastTime != null) {
-            final lastDate = DateTime.fromMillisecondsSinceEpoch(lastTime);
-            if (DateTime.now().difference(lastDate) <
-                const Duration(hours: 1)) {
-              _logger.i('Categories cache is fresh (< 1h), skipping API call.');
-              return;
-            }
-          }
-        }
-      }
-
+      // Cache logic removed as requested. Always fetch fresh.
       final response = await _generalService.getCategories(parentId);
       if (response['success'] == true && response['data'] != null) {
         final List cats = response['data']['categories'];
@@ -191,8 +170,6 @@ class HomeViewModel extends ChangeNotifier {
 
         if (parentId == 0) {
           _categories = parsedCats;
-          // Save to cache
-          await _cacheService.saveCategories(parsedCats);
         } else {
           _subCategories = parsedCats;
         }

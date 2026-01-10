@@ -12,7 +12,7 @@ class ProductViewModel extends ChangeNotifier {
   final Logger _logger = Logger();
 
   List<Product> products = [];
-  bool isLoading = false;
+  bool isLoading = true;
   bool isLoadMoreRunning = false;
   bool isLastPage = false;
   int currentPage = 1;
