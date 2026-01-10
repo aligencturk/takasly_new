@@ -135,16 +135,25 @@ class ProductService {
 
       if (response != null && response is Map) {
         // Try to parse productID from response
-        // Common patterns: response['data']['productID'] or response['productID']
         if (response['data'] != null && response['data'] is Map) {
           final data = response['data'];
           if (data['productID'] != null) {
             return int.tryParse(data['productID'].toString());
           }
         }
-        // Fallback if it's top level (less likely for this structure but possible)
         if (response['productID'] != null) {
           return int.tryParse(response['productID'].toString());
+        }
+
+        // Try to find a message if no ID found
+        String? msg;
+        if (response['message'] != null) msg = response['message'];
+        if (response['data'] is Map && response['data']['message'] != null) {
+          msg = response['data']['message'];
+        }
+
+        if (msg != null) {
+          throw BusinessException(msg);
         }
       }
       return null;

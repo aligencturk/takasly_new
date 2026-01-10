@@ -120,6 +120,11 @@ class ApiService {
     // Helper to extract error message
     String? getErrorMessage() {
       if (body is Map) {
+        if (body['data'] is Map) {
+          final dataMsg =
+              body['data']['error_message'] ?? body['data']['message'];
+          if (dataMsg != null) return dataMsg;
+        }
         return body['error_message'] ?? body['message'];
       }
       return null;
@@ -127,7 +132,7 @@ class ApiService {
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
       // Check if the response body itself indicates an error despite 200 OK
-      if (body is Map && body['error'] == true) {
+      if (body is Map && (body['error'] == true || body['success'] == false)) {
         final errorMsg = getErrorMessage() ?? 'Bir hata oluştu';
         _logger.w('İş Mantığı Hatası (Success False): $errorMsg');
         throw BusinessException(errorMsg);

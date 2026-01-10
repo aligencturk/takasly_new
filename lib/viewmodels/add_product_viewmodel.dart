@@ -7,6 +7,7 @@ import 'package:geocoding/geocoding.dart';
 
 import '../services/product_service.dart';
 import '../services/general_service.dart';
+import '../services/api_service.dart';
 import '../models/products/add_product_request_model.dart';
 import '../models/general_models.dart';
 import '../models/products/product_models.dart'
@@ -421,7 +422,8 @@ class AddProductViewModel extends ChangeNotifier {
 
   // Submission
   Future<int?> submitProduct(String userToken, int userId) async {
-    if (!_validate()) return null;
+    // Validation is relaxed to let the API handle errors/warnings as per user request.
+    // if (!_validate()) return null;
 
     isLoading = true;
     errorMessage = null;
@@ -433,12 +435,12 @@ class AddProductViewModel extends ChangeNotifier {
         productTitle: titleController.text.trim(),
         productDesc: descController.text.trim(),
         // Get the deepest selected category
-        categoryID: _getLastSelectedCategoryId(),
-        conditionID: selectedCondition!.id!,
+        categoryID: _getLastSelectedCategoryId(), // Now safe
+        conditionID: selectedCondition?.id ?? 0,
         tradeFor: tradeForController.text.trim(),
         productImages: selectedImages,
-        productCity: selectedCity!.cityNo!.toString(),
-        productDistrict: selectedDistrict!.districtNo!.toString(),
+        productCity: selectedCity?.cityNo?.toString() ?? "0",
+        productDistrict: selectedDistrict?.districtNo?.toString() ?? "0",
         productLat: productLat ?? 0.0,
         productLong: productLong ?? 0.0,
         isShowContact: isShowContact ? 1 : 0,
@@ -476,45 +478,41 @@ class AddProductViewModel extends ChangeNotifier {
     }
   }
 
+  // Relaxed validation to allow API to return errors
   bool _validate() {
+    /* 
+    // Old strict validation
     if (titleController.text.trim().isEmpty) {
       errorMessage = "Lütfen ürün başlığı giriniz.";
       return false;
     }
-    if (descController.text.trim().isEmpty) {
-      errorMessage = "Lütfen ürün açıklaması giriniz.";
-      return false;
-    }
-    if (selectedCategory == null) {
-      errorMessage = "Lütfen kategori seçiniz.";
-      return false;
-    }
-
-    // Validate that if a level exists, an option is selected
-    for (int i = 0; i < categoryLevels.length; i++) {
-      if (selectedSubCategories[i] == null) {
-        errorMessage = "Lütfen alt kategoriyi seçiniz.";
-        return false;
-      }
-    }
-
-    if (selectedCondition == null) {
-      errorMessage = "Lütfen durum seçiniz.";
-      return false;
-    }
-    if (selectedCity == null || selectedDistrict == null) {
-      errorMessage = "Lütfen il ve ilçe seçiniz.";
-      return false;
-    }
-    if (productLat == null || productLong == null) {
-      errorMessage = "Lütfen konum bilgisi alınız."; // Or enforce taking it
-      return false;
-    }
-    if (selectedImages.isEmpty) {
-      errorMessage = "Lütfen en az bir resim ekleyiniz.";
-      return false;
-    }
+    ...
+    */
     return true;
+  }
+
+  // Determine which step has missing data for auto-navigation
+  int? getFirstMissingStep() {
+    // Step 0: General Info
+    if (titleController.text.trim().isEmpty) return 0;
+    if (selectedCategory == null) return 0;
+    for (int i = 0; i < categoryLevels.length; i++) {
+      if (selectedSubCategories[i] == null) return 0;
+    }
+
+    // Step 1: Details (Condition)
+    if (selectedCondition == null) return 1;
+
+    // Step 2: Images & Desc
+    // Images are critical
+    if (selectedImages.isEmpty) return 2;
+    if (descController.text.trim().isEmpty) return 2;
+
+    // Step 3: Location & Publish
+    if (selectedCity == null || selectedDistrict == null) return 3;
+    if (productLat == null || productLong == null) return 3;
+
+    return null;
   }
 
   int _getLastSelectedCategoryId() {
@@ -522,11 +520,11 @@ class AddProductViewModel extends ChangeNotifier {
       // Iterate backwards to find the last non-null selection
       for (int i = selectedSubCategories.length - 1; i >= 0; i--) {
         if (selectedSubCategories[i] != null) {
-          return selectedSubCategories[i]!.catID!;
+          return selectedSubCategories[i]!.catID ?? 0;
         }
       }
     }
-    return selectedCategory!.catID!;
+    return selectedCategory?.catID ?? 0;
   }
 
   @override
@@ -538,7 +536,4 @@ class AddProductViewModel extends ChangeNotifier {
   }
 }
 
-class BusinessException implements Exception {
-  final String message;
-  BusinessException(this.message);
-}
+// Removed local BusinessException class to use the one from api_service.dart

@@ -81,71 +81,85 @@ class _AddProductViewBody extends HookWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FBFF),
-      body: viewModel.isLoading
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const CircularProgressIndicator(color: AppTheme.primary),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Veriler Hazırlanıyor...',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : GestureDetector(
-              onTap: () => FocusScope.of(context).unfocus(),
-              behavior: HitTestBehavior.opaque,
-              child: Stack(
-                children: [
-                  SafeArea(
-                    child: Column(
-                      children: [
-                        _ModernAppBar(currentStep: currentStep.value),
-                        _ProgressIndicator(currentStep: currentStep.value),
-                        Expanded(
-                          child: PageView(
-                            controller: pageController,
-                            physics: const NeverScrollableScrollPhysics(),
-                            onPageChanged: (index) => currentStep.value = index,
-                            children: [
-                              _Step1Content(viewModel: viewModel),
-                              _Step2Content(viewModel: viewModel),
-                              _Step3Content(viewModel: viewModel),
-                              _Step4Content(viewModel: viewModel),
-                            ],
-                          ),
+      body: Stack(
+        children: [
+          // Main Content (Always built to keep PageController attached)
+          GestureDetector(
+            onTap: () => FocusScope.of(context).unfocus(),
+            behavior: HitTestBehavior.opaque,
+            child: Stack(
+              children: [
+                SafeArea(
+                  child: Column(
+                    children: [
+                      _ModernAppBar(currentStep: currentStep.value),
+                      _ProgressIndicator(currentStep: currentStep.value),
+                      Expanded(
+                        child: PageView(
+                          controller: pageController,
+                          physics: const NeverScrollableScrollPhysics(),
+                          onPageChanged: (index) => currentStep.value = index,
+                          children: [
+                            _Step1Content(viewModel: viewModel),
+                            _Step2Content(viewModel: viewModel),
+                            _Step3Content(viewModel: viewModel),
+                            _Step4Content(viewModel: viewModel),
+                          ],
                         ),
-                        _BottomActionBar(
-                          currentStep: currentStep.value,
-                          onBack: previousStep,
-                          onForward: () async {
-                            FocusScope.of(context).unfocus();
-                            if (currentStep.value < 3) {
-                              nextStep();
-                            } else {
-                              await _handleSubmission(context, viewModel);
-                            }
-                          },
-                          isLastStep: currentStep.value == 3,
-                        ),
-                      ],
-                    ),
+                      ),
+                      _BottomActionBar(
+                        currentStep: currentStep.value,
+                        onBack: previousStep,
+                        onForward: () async {
+                          FocusScope.of(context).unfocus();
+                          if (currentStep.value < 3) {
+                            nextStep();
+                          } else {
+                            await _handleSubmission(
+                              context,
+                              viewModel,
+                              pageController,
+                            );
+                          }
+                        },
+                        isLastStep: currentStep.value == 3,
+                      ),
+                    ],
                   ),
-                ],
+                ),
+              ],
+            ),
+          ),
+          // Loading Overlay
+          if (viewModel.isLoading)
+            Container(
+              color: Colors.white.withOpacity(0.8),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const CircularProgressIndicator(color: AppTheme.primary),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Veriler Hazırlanıyor...',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
+        ],
+      ),
     );
   }
 
   Future<void> _handleSubmission(
     BuildContext context,
     AddProductViewModel viewModel,
+    PageController pageController,
   ) async {
     // ... (logic remains same as per submission handling)
     final prefs = await SharedPreferences.getInstance();
@@ -159,6 +173,19 @@ class _AddProductViewBody extends HookWidget {
 
     if (token != null && userId != null) {
       final productId = await viewModel.submitProduct(token, userId);
+
+      // If failed, check for missing fields and navigate
+      if (productId == null) {
+        final missingStep = viewModel.getFirstMissingStep();
+        if (missingStep != null) {
+          pageController.animateToPage(
+            missingStep,
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeInOutQuart,
+          );
+        }
+      }
+
       if (productId != null && context.mounted) {
         // Show Dialog
         final shouldSponsor = await showDialog<bool>(
@@ -309,7 +336,7 @@ class _AddProductViewBody extends HookWidget {
           MaterialPageRoute(builder: (context) => const LoginView()),
         );
         if (loggedIn == true && context.mounted) {
-          await _handleSubmission(context, viewModel);
+          await _handleSubmission(context, viewModel, pageController);
         }
       }
     }
