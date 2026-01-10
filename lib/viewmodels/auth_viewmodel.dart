@@ -115,6 +115,9 @@ class AuthViewModel extends ChangeNotifier {
         await prefs.setString('userToken', _user!.token);
         await prefs.setInt('userID', _user!.userID);
         FirebaseMessagingService.subscribeToUserTopic(_user!.userID.toString());
+
+        // Automatically fetch user profile after successful login
+        await _getUserInternal();
       }
 
       _state = AuthState.success;
@@ -129,14 +132,15 @@ class AuthViewModel extends ChangeNotifier {
   }
 
   Future<void> getUser() async {
+    if (_state == AuthState.busy) return;
+    await _getUserInternal();
+  }
+
+  Future<void> _getUserInternal() async {
     if (_user?.token == null) {
-      // If we don't have a token, we can't fetch the user.
-      // Ideally should handle this case (logout or re-login).
-      _logger.w("getUser called but no user token available.");
+      _logger.w("_getUserInternal called but no user token available.");
       return;
     }
-
-    if (_state == AuthState.busy) return;
 
     _state = AuthState.busy;
     _errorMessage = null;
@@ -275,6 +279,9 @@ class AuthViewModel extends ChangeNotifier {
           _logger.i(
             "Verification successful (Register). User logged in: ${_user?.userID}",
           );
+
+          // Automatically fetch user profile after successful verification
+          await _getUserInternal();
         } else {
           // Should not happen in register flow usually
           _logger.w(
@@ -528,6 +535,9 @@ class AuthViewModel extends ChangeNotifier {
         await prefs.setString('userToken', _user!.token);
         await prefs.setInt('userID', _user!.userID);
         FirebaseMessagingService.subscribeToUserTopic(_user!.userID.toString());
+
+        // Automatically fetch user profile after successful social login
+        await _getUserInternal();
 
         _state = AuthState.success;
         _logger.i(
