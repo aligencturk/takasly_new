@@ -246,10 +246,19 @@ class Product {
 class Category {
   int? catID;
   String? catName;
+  String? catImage;
 
-  Category({this.catID, this.catName});
+  Category({this.catID, this.catName, this.catImage});
 
   factory Category.fromJson(Map<String, dynamic> json) {
-    return Category(catID: json['catID'], catName: json['catName']);
+    return Category(
+      catID: json['catID'],
+      catName: json['catName'],
+      catImage: json['catImage'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'catID': catID, 'catName': catName, 'catImage': catImage};
   }
 }

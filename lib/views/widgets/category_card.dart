@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../models/home/home_models.dart';
+import '../../models/products/product_models.dart';
 import '../../theme/app_theme.dart';
 
 class CategoryCard extends StatelessWidget {
@@ -17,6 +17,7 @@ class CategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final name = category.catName ?? '';
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
@@ -27,39 +28,52 @@ class CategoryCard extends StatelessWidget {
             SizedBox(
               width: 40,
               height: 40,
-              child: SvgPicture.network(
-                category.catImage,
-                placeholderBuilder: (context) => Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.category_outlined,
-                    size: 20,
-                    color: isSelected ? AppTheme.primary : Colors.grey[300],
-                  ),
-                ),
-                errorBuilder: (context, error, stackTrace) => Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.error_outline,
-                    size: 20,
-                    color: isSelected ? AppTheme.primary : Colors.grey,
-                  ),
-                ),
-              ),
+              child: category.catImage != null
+                  ? SvgPicture.network(
+                      category.catImage!,
+                      placeholderBuilder: (context) => Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.category_outlined,
+                          size: 20,
+                          color: isSelected
+                              ? AppTheme.primary
+                              : Colors.grey[300],
+                        ),
+                      ),
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.error_outline,
+                          size: 20,
+                          color: isSelected ? AppTheme.primary : Colors.grey,
+                        ),
+                      ),
+                    )
+                  : Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.category_outlined,
+                        size: 20,
+                        color: isSelected ? AppTheme.primary : Colors.grey[300],
+                      ),
+                    ),
             ),
             const SizedBox(height: 8),
             Text(
-              category.catName.length > 40
-                  ? '${category.catName.substring(0, 40)}...'
-                  : category.catName,
+              name.length > 40 ? '${name.substring(0, 40)}...' : name,
               textAlign: TextAlign.center,
               style: AppTheme.safePoppins(
                 fontSize: 10,

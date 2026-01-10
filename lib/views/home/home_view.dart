@@ -511,6 +511,11 @@ class _HomeViewState extends State<HomeView> {
                               child: Text(productViewModel.errorMessage!),
                             ),
                           )
+                        else if (productViewModel.products.isEmpty)
+                          SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: _buildEmptyState(context),
+                          )
                         else
                           SliverPadding(
                             padding: const EdgeInsets.all(16),
@@ -696,6 +701,78 @@ class _HomeViewState extends State<HomeView> {
           });
           _refreshCurrentPage(index);
         },
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              child: Icon(
+                Icons.inventory_2_outlined,
+                size: 80,
+                color: AppTheme.primary.withOpacity(0.5),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              "Henüz İlan Yok",
+              textAlign: TextAlign.center,
+              style: AppTheme.safePoppins(
+                color: AppTheme.textPrimary,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              "Bu kategoride henüz ilan bulunmamaktadır. İlk ilanı sen eklemek ister misin?",
+              textAlign: TextAlign.center,
+              style: AppTheme.safePoppins(
+                color: AppTheme.textSecondary,
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AddProductView(),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 16,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                elevation: 0,
+              ),
+              child: Text(
+                "Hemen İlan Ekle",
+                style: AppTheme.safePoppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

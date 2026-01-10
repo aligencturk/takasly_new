@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/home/home_models.dart';
+import '../models/products/product_models.dart';
 
 class CacheService {
   static const String _categoriesKey = 'cached_categories';

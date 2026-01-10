@@ -12,6 +12,7 @@ import 'widgets/search_filter_bottom_sheet.dart';
 import '../widgets/ads/banner_ad_widget.dart';
 import '../auth/login_view.dart';
 import '../../viewmodels/auth_viewmodel.dart';
+import '../products/add_product_view.dart';
 
 class SearchView extends StatefulWidget {
   const SearchView({super.key});
@@ -312,7 +313,7 @@ class _SearchViewState extends State<SearchView> {
                   ),
                 )
               else if (viewModel.products.isEmpty) ...[
-                if (_searchController.text.isEmpty &&
+                if (!viewModel.hasActiveFilters &&
                     viewModel.popularCategories.isNotEmpty) ...[
                   SliverToBoxAdapter(
                     child: Padding(
@@ -343,16 +344,30 @@ class _SearchViewState extends State<SearchView> {
                   ),
                 ] else
                   SliverFillRemaining(
+                    hasScrollBody: false,
                     child: _buildEmptyState(
-                      icon: _searchController.text.isEmpty
-                          ? Icons.manage_search_rounded
-                          : Icons.search_off_rounded,
-                      title: _searchController.text.isEmpty
-                          ? "Keşfetmeye Hazır mısın?"
-                          : "Sonuç Bulunamadı",
-                      subtitle: _searchController.text.isEmpty
-                          ? "Aradığın her şeyi burada bulabilirsin."
-                          : "'${_searchController.text}' için uygun sonuç bulamadık.",
+                      icon: viewModel.hasActiveFilters
+                          ? Icons.search_off_rounded
+                          : Icons.manage_search_rounded,
+                      title: viewModel.emptyMessage != null
+                          ? "Sonuç Bulunamadı"
+                          : (!viewModel.hasActiveFilters
+                                ? "Keşfetmeye Hazır mısın?"
+                                : "Sonuç Bulunamadı"),
+                      subtitle:
+                          viewModel.emptyMessage ??
+                          (!viewModel.hasActiveFilters
+                              ? "Aradığın her şeyi burada bulabilirsin. İlk ilanı sen eklemek ister misin?"
+                              : "'${_searchController.text.isEmpty ? viewModel.currentCategoryName ?? 'Seçilen kriterler' : _searchController.text}' için uygun sonuç bulamadık. Hemen bir ilan ekleyerek takasa başlayabilirsin!"),
+                      onActionPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AddProductView(),
+                          ),
+                        );
+                      },
+                      actionLabel: "Hemen İlan Ekle",
                     ),
                   ),
               ] else ...[
@@ -655,6 +670,8 @@ class _SearchViewState extends State<SearchView> {
     required String title,
     required String subtitle,
     Color color = AppTheme.textSecondary,
+    VoidCallback? onActionPressed,
+    String? actionLabel,
   }) {
     return Center(
       child: Padding(
@@ -691,6 +708,32 @@ class _SearchViewState extends State<SearchView> {
                 height: 1.5,
               ),
             ),
+            if (onActionPressed != null && actionLabel != null) ...[
+              const SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: onActionPressed,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 16,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  elevation: 0,
+                ),
+                child: Text(
+                  actionLabel,
+                  style: AppTheme.safePoppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

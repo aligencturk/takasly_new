@@ -15,27 +15,3 @@ class HomeLogos {
     );
   }
 }
-
-class Category {
-  final int catID;
-  final String catName;
-  final String catImage;
-
-  Category({
-    required this.catID,
-    required this.catName,
-    required this.catImage,
-  });
-
-  factory Category.fromJson(Map<String, dynamic> json) {
-    return Category(
-      catID: json['catID'] ?? 0,
-      catName: json['catName'] ?? '',
-      catImage: json['catImage'] ?? '',
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {'catID': catID, 'catName': catName, 'catImage': catImage};
-  }
-}

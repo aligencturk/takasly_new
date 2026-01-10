@@ -29,13 +29,16 @@ class SettingsView extends StatelessWidget {
                 SettingsTile(
                   icon: Icons.person_outline_rounded,
                   title: "Profili Düzenle",
-                  onTap: () {
-                    Navigator.push(
+                  onTap: () async {
+                    await Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => const ProfileEditView(),
                       ),
                     );
+                    if (context.mounted) {
+                      context.read<AuthViewModel>().getUser();
+                    }
                   },
                 ),
                 _buildDivider(),

@@ -638,7 +638,7 @@ class AuthViewModel extends ChangeNotifier {
       if (response.success == true) {
         _logger.i("User account updated successfully.");
         // Refresh user profile
-        await getUser();
+        await _getUserInternal();
       } else {
         throw Exception(response.message ?? "Update failed");
       }

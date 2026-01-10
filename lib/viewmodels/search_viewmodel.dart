@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geolocator/geolocator.dart';
-import '../models/products/product_models.dart' hide Category;
+import '../models/products/product_models.dart';
 import '../services/product_service.dart';
 import 'package:logger/logger.dart';
 
 import '../services/general_service.dart';
 import '../models/search/popular_category_model.dart';
-import '../models/home/home_models.dart';
 import '../models/general_models.dart';
 
 class SearchViewModel extends ChangeNotifier {
@@ -23,6 +22,7 @@ class SearchViewModel extends ChangeNotifier {
   int currentPage = 1;
   String? errorMessage;
   String _currentQuery = "";
+  String? emptyMessage;
 
   // Core Search Filter
   int? _currentCategoryId;
@@ -46,6 +46,13 @@ class SearchViewModel extends ChangeNotifier {
 
   String get currentQuery => _currentQuery;
   String? get currentCategoryName => _currentCategoryName;
+
+  bool get hasActiveFilters =>
+      _currentQuery.trim().isNotEmpty ||
+      _currentCategoryId != null ||
+      selectedCity != null ||
+      selectedConditionIds.isNotEmpty ||
+      sortType != 'default';
 
   Future<void> init() async {
     // Parallel fetch of initial data
@@ -123,7 +130,7 @@ class SearchViewModel extends ChangeNotifier {
     subCategories = []; // Reset subcategories
     if (category?.catID != null) {
       // If we selected a category, fetch its subcategories
-      fetchCategories(category!.catID);
+      fetchCategories(category!.catID!);
     }
     notifyListeners();
   }
@@ -131,6 +138,13 @@ class SearchViewModel extends ChangeNotifier {
   void setCategoryFilter(int? categoryId, String? categoryName) {
     _currentCategoryId = categoryId;
     _currentCategoryName = categoryName;
+    notifyListeners();
+  }
+
+  void setCategoryPath(Category finalCategory, List<Category> path) {
+    selectedCategory = finalCategory;
+    _currentCategoryId = finalCategory.catID;
+    _currentCategoryName = finalCategory.catName;
     notifyListeners();
   }
 
@@ -165,8 +179,8 @@ class SearchViewModel extends ChangeNotifier {
   }
 
   // Apply filters triggers a search refresh
-  void applyFilters() {
-    search(_currentQuery, isRefresh: true);
+  Future<void> applyFilters() async {
+    await search(_currentQuery, isRefresh: true);
   }
 
   // Favorites
@@ -345,6 +359,8 @@ class SearchViewModel extends ChangeNotifier {
           totalItems = response.data!.totalItems!;
         }
 
+        emptyMessage = response.data!.emptyMessage;
+
         if (isRefresh) {
           products = newProducts;
         } else {
@@ -402,6 +418,7 @@ class SearchViewModel extends ChangeNotifier {
 
     products = [];
     errorMessage = null;
+    emptyMessage = null;
     isLastPage = false;
     currentPage = 1;
     notifyListeners();

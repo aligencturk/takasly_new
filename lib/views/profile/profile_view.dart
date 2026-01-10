@@ -394,13 +394,16 @@ class _ProfileViewState extends State<ProfileView> {
             ),
           ),
           GestureDetector(
-            onTap: () {
-              Navigator.push(
+            onTap: () async {
+              await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => const ProfileEditView(),
                 ),
               );
+              if (mounted) {
+                context.read<AuthViewModel>().getUser();
+              }
             },
             child: Container(
               padding: const EdgeInsets.all(8),

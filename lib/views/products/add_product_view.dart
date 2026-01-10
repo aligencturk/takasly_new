@@ -11,6 +11,7 @@ import '../../theme/app_theme.dart';
 import '../../viewmodels/add_product_viewmodel.dart';
 import '../../models/general_models.dart';
 import '../../models/products/product_models.dart' show Category;
+import '../widgets/category_selection_view.dart';
 
 class AddProductView extends HookWidget {
   const AddProductView({super.key});
@@ -443,63 +444,12 @@ class _Step1Content extends StatelessWidget {
     BuildContext context,
     AddProductViewModel viewModel,
   ) async {
-    await _showLevelPicker(
-      context,
-      'Kategori Seçin',
-      viewModel.categories,
-      (item) => viewModel.setSelectedCategory(item),
-      0,
-      viewModel,
-    );
-    // Path already updated in viewmodel via callbacks
-  }
-
-  Future<Category?> _showLevelPicker(
-    BuildContext context,
-    String title,
-    List<Category> items,
-    Future<bool> Function(Category) onSelect,
-    int level,
-    AddProductViewModel viewModel,
-  ) async {
-    return await Navigator.push<Category>(
+    Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => _CategoryPickerView<Category>(
-          title: title,
-          items: items,
-          itemLabel: (c) => c.catName ?? '',
-          onSelected: (item) async {
-            final hasMore = await onSelect(item);
-            if (hasMore && context.mounted) {
-              final nextLevelItems = level == 0
-                  ? viewModel.categoryLevels[0]
-                  : viewModel.categoryLevels[level];
-
-              final finalResult = await _showLevelPicker(
-                context,
-                'Alt Kategori Seçin',
-                nextLevelItems,
-                (sub) => viewModel.onSubCategoryChanged(level, sub),
-                level + 1,
-                viewModel,
-              );
-
-              if (finalResult != null && context.mounted) {
-                // Someone deeper made a final choice, bubble it up
-                Navigator.pop(context, finalResult);
-                return true;
-              }
-              // If finalResult is null, user just backed out of sub-level,
-              // stay in the current level picker.
-              return true;
-            }
-
-            // Final leaf selection!
-            if (context.mounted) {
-              Navigator.pop(context, item);
-            }
-            return true;
+        builder: (context) => CategorySelectionView(
+          onCategorySelected: (category, path) {
+            viewModel.setCategoryPath(category, path);
           },
         ),
       ),
@@ -685,163 +635,16 @@ class _CategoryFullSelector<T> extends StatelessWidget {
   }
 
   Future<void> _startSimplePicker(BuildContext context) async {
-    final T? result = await Navigator.push(
+    Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => _CategoryPickerView<T>(
+        builder: (context) => CategorySelectionView(
           title: label,
-          items: items,
-          itemLabel: itemLabel,
+          onCategorySelected: (category, path) {
+            onChanged(category as T);
+          },
         ),
       ),
-    );
-    if (result != null) onChanged(result);
-  }
-}
-
-class _CategoryPickerView<T> extends HookWidget {
-  final String title;
-  final List<T> items;
-  final String Function(T) itemLabel;
-  final Future<bool> Function(T)? onSelected;
-
-  const _CategoryPickerView({
-    required this.title,
-    required this.items,
-    required this.itemLabel,
-    this.onSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final searchController = useTextEditingController();
-    final searchQuery = useState('');
-    final isPageLoading = useState(false);
-
-    final filteredItems = items.where((item) {
-      final labelStr = itemLabel(item).toLowerCase();
-      return labelStr.contains(searchQuery.value.toLowerCase());
-    }).toList();
-
-    return Stack(
-      children: [
-        Scaffold(
-          backgroundColor: Colors.white,
-          appBar: AppBar(
-            backgroundColor: Colors.white,
-            elevation: 0.5,
-            centerTitle: true,
-            title: Text(
-              title,
-              style: const TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.w800,
-                fontSize: 18,
-              ),
-            ),
-            leading: IconButton(
-              icon: const Icon(Icons.close_rounded, color: Colors.black),
-              onPressed: () => Navigator.pop(context),
-            ),
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(70),
-              child: Container(
-                margin: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: TextField(
-                  controller: searchController,
-                  onChanged: (val) => searchQuery.value = val,
-                  textCapitalization: TextCapitalization.sentences,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'Kanal veya kategori ara...',
-                    hintStyle: TextStyle(
-                      color: Colors.grey[400],
-                      fontSize: 15,
-                      fontWeight: FontWeight.w400,
-                    ),
-                    icon: Icon(
-                      Icons.search_rounded,
-                      color: Colors.grey[400],
-                      size: 22,
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          body: ListView.separated(
-            padding: const EdgeInsets.only(top: 12, bottom: 32),
-            itemCount: filteredItems.length,
-            separatorBuilder: (context, index) =>
-                Divider(height: 1, color: Colors.grey[50], indent: 64),
-            itemBuilder: (context, index) {
-              final item = filteredItems[index];
-              return ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 8,
-                ),
-                leading: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primary.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      Icons.label_important_outline_rounded,
-                      color: AppTheme.primary.withOpacity(0.6),
-                      size: 18,
-                    ),
-                  ),
-                ),
-                title: Text(
-                  itemLabel(item),
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black87,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                trailing: Icon(
-                  Icons.chevron_right_rounded,
-                  color: Colors.grey[300],
-                  size: 24,
-                ),
-                onTap: () async {
-                  if (onSelected != null) {
-                    isPageLoading.value = true;
-                    // The onSelected callback now handles the sub-navigation
-                    await onSelected!(item);
-                    isPageLoading.value = false;
-                  } else {
-                    Navigator.pop(context, item);
-                  }
-                },
-              );
-            },
-          ),
-        ),
-        if (isPageLoading.value)
-          Container(
-            color: Colors.black.withOpacity(0.1),
-            child: const Center(
-              child: CircularProgressIndicator(color: AppTheme.primary),
-            ),
-          ),
-      ],
     );
   }
 }

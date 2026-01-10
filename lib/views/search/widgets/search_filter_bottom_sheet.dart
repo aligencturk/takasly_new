@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import '../../../viewmodels/search_viewmodel.dart';
 import '../../../theme/app_theme.dart';
-import 'search_category_selection_sheet.dart';
+import '../../widgets/category_selection_view.dart';
 
 class SearchFilterBottomSheet extends StatelessWidget {
   const SearchFilterBottomSheet({super.key});
@@ -39,27 +39,30 @@ class SearchFilterBottomSheet extends StatelessWidget {
                   ),
 
                   // Header
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Filtrele',
-                          style: AppTheme.safePoppins(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.textPrimary,
+                  Container(
+                    color: AppTheme.primary,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Filtrele',
+                            style: AppTheme.safePoppins(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                      ],
+                          IconButton(
+                            icon: const Icon(Icons.close, color: Colors.white),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  const Divider(height: 1),
+                  Divider(height: 1, color: Colors.white.withOpacity(0.2)),
 
                   // Content
                   Expanded(
@@ -275,11 +278,16 @@ class SearchFilterBottomSheet extends StatelessWidget {
   Widget _buildCategorySelector(BuildContext context, SearchViewModel vm) {
     return InkWell(
       onTap: () {
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (context) => const SearchCategorySelectionSheet(),
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CategorySelectionView(
+              allowAnyLevel: true,
+              onCategorySelected: (category, path) {
+                vm.setCategoryPath(category, path);
+              },
+            ),
+          ),
         );
       },
       borderRadius: BorderRadius.circular(12),
@@ -299,7 +307,7 @@ class SearchFilterBottomSheet extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.grey[100]!),
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.grid_view_rounded,
                 color: AppTheme.primary,
                 size: 20,

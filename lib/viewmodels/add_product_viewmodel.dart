@@ -204,6 +204,18 @@ class AddProductViewModel extends ChangeNotifier {
     return false;
   }
 
+  void setCategoryPath(Category finalCategory, List<Category> path) {
+    if (path.isEmpty) return;
+
+    selectedCategory = path.first;
+    if (path.length > 1) {
+      selectedSubCategories = path.sublist(1);
+    } else {
+      selectedSubCategories = [];
+    }
+    notifyListeners();
+  }
+
   void setSelectedCondition(Condition? condition) {
     selectedCondition = condition;
     notifyListeners();

@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../../viewmodels/home_viewmodel.dart';
 import '../../../../viewmodels/product_viewmodel.dart';
 import '../../../../theme/app_theme.dart';
-import 'category_selection_sheet.dart';
+import '../../widgets/category_selection_view.dart';
 
 class FilterBottomSheet extends StatelessWidget {
   const FilterBottomSheet({super.key});
@@ -279,11 +279,16 @@ class FilterBottomSheet extends StatelessWidget {
   Widget _buildCategorySelector(BuildContext context, HomeViewModel vm) {
     return InkWell(
       onTap: () {
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (context) => const CategorySelectionSheet(),
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CategorySelectionView(
+              allowAnyLevel: true,
+              onCategorySelected: (category, path) {
+                vm.setCategoryPath(category, path);
+              },
+            ),
+          ),
         );
       },
       borderRadius: BorderRadius.circular(12),

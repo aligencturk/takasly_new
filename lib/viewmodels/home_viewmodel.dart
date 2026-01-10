@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/general_service.dart';
 import '../services/cache_service.dart';
+import '../models/products/product_models.dart';
 import '../models/home/home_models.dart';
 import '../models/general_models.dart';
 import 'package:logger/logger.dart';
@@ -225,8 +226,13 @@ class HomeViewModel extends ChangeNotifier {
     _selectedCategory = category;
     _subCategories = []; // Reset subcategories
     if (category?.catID != null) {
-      fetchCategories(category!.catID);
+      fetchCategories(category!.catID!);
     }
+    notifyListeners();
+  }
+
+  void setCategoryPath(Category finalCategory, List<Category> path) {
+    _selectedCategory = finalCategory;
     notifyListeners();
   }
 
