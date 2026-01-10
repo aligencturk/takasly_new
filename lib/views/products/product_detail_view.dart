@@ -833,30 +833,31 @@ class _ProductDetailViewState extends State<ProductDetailView> {
             ],
           ),
           const SizedBox(height: 16),
-          Center(
-            child: TextButton.icon(
-              onPressed: () {},
-              icon: Icon(
-                Icons.warning_amber_rounded,
-                size: 16,
-                color: Colors.grey[600],
-              ),
-              label: Text(
-                "Bu ilanı şikayet et",
-                style: TextStyle(color: Colors.grey[600], fontSize: 13),
-              ),
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.grey[100],
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 8,
+          if (product.userID != context.read<AuthViewModel>().user?.userID)
+            Center(
+              child: TextButton.icon(
+                onPressed: () {},
+                icon: Icon(
+                  Icons.warning_amber_rounded,
+                  size: 16,
+                  color: Colors.grey[600],
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+                label: Text(
+                  "Bu ilanı şikayet et",
+                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                ),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.grey[100],
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 8,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -865,7 +866,12 @@ class _ProductDetailViewState extends State<ProductDetailView> {
   Widget _buildBottomBar(ProductDetail? product) {
     if (product == null) return const SizedBox.shrink();
 
+    final authVM = context.read<AuthViewModel>();
+    final isOwner =
+        authVM.user?.userID != null && product.userID == authVM.user?.userID;
+
     final showCallButton =
+        !isOwner &&
         product.isShowContact == true &&
         product.userPhone != null &&
         product.userPhone!.isNotEmpty;
@@ -874,66 +880,67 @@ class _ProductDetailViewState extends State<ProductDetailView> {
       mainAxisSize: MainAxisSize.min,
       children: [
         const BannerAdWidget(),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: AppTheme.cardShadow,
-          ),
-          child: SafeArea(
-            child: Row(
-              children: [
-                if (showCallButton) ...[
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _makePhoneCall(product.userPhone!),
-                      icon: const Icon(Icons.phone, size: 18),
-                      label: const Text("Ara"),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppTheme.primary,
-                        side: const BorderSide(
-                          color: AppTheme.primary,
-                          width: 1.5,
+        if (!isOwner)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: AppTheme.cardShadow,
+            ),
+            child: SafeArea(
+              child: Row(
+                children: [
+                  if (showCallButton) ...[
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _makePhoneCall(product.userPhone!),
+                        icon: const Icon(Icons.phone, size: 18),
+                        label: const Text("Ara"),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.primary,
+                          side: const BorderSide(
+                            color: AppTheme.primary,
+                            width: 1.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          textStyle: AppTheme.safePoppins(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.primary,
+                          ),
                         ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showOfferBottomSheet(context, product),
+                      icon: const Icon(Icons.message, size: 18),
+                      label: const Text("Mesaj"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
+                        elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         textStyle: AppTheme.safePoppins(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.primary,
+                          color: Colors.white,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
                 ],
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => _showOfferBottomSheet(context, product),
-                    icon: const Icon(Icons.message, size: 18),
-                    label: const Text("Mesaj"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      textStyle: AppTheme.safePoppins(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
       ],
     );
   }
