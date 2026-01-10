@@ -31,7 +31,7 @@ class _OfferBottomSheetState extends State<OfferBottomSheet> {
   final TextEditingController _messageController = TextEditingController();
 
   final List<String> _quickMessages = [
-    "Merhaba, ürün hala satılık mı?",
+    "Merhaba, ürününüzle ilgileniyorum.",
     "Takas düşünür müsünüz?",
     "Teklifim uygun mu?",
     "Detaylı bilgi alabilir miyim?",

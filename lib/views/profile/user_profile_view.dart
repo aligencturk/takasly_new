@@ -74,6 +74,7 @@ class _UserProfileViewState extends State<UserProfileView>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
         backgroundColor: Colors.white,
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
         title: Text(
@@ -165,6 +166,7 @@ class _UserProfileViewState extends State<UserProfileView>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
         backgroundColor: Colors.white,
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
         title: Text(

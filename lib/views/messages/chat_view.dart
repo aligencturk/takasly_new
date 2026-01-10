@@ -120,6 +120,7 @@ class _ChatViewState extends State<ChatView> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
         title: const Text("Kullanıcıyı Raporla"),
         content: TextField(
           controller: reasonController,
@@ -179,6 +180,7 @@ class _ChatViewState extends State<ChatView> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
         title: const Text("Kullanıcıyı Engelle"),
         content: const Text(
           "Bu kullanıcıyı engellemek istediğinize emin misiniz? Bu işlemden sonra birbirinize mesaj gönderemeyeceksiniz.",
@@ -299,7 +301,11 @@ class _ChatViewState extends State<ChatView> {
                   value: 'profile',
                   child: Row(
                     children: [
-                      Icon(Icons.person_outline, size: 18),
+                      Icon(
+                        Icons.person_outline,
+                        size: 18,
+                        color: AppTheme.textPrimary,
+                      ),
                       SizedBox(width: 8),
                       Text("Kullanıcının profiline git"),
                     ],
