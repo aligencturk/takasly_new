@@ -79,20 +79,120 @@ class _AddProductViewBody extends HookWidget {
       }
     }
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF9FBFF),
-      body: Stack(
-        children: [
-          // Main Content (Always built to keep PageController attached)
-          GestureDetector(
-            onTap: () => FocusScope.of(context).unfocus(),
-            behavior: HitTestBehavior.opaque,
-            child: Stack(
-              children: [
-                SafeArea(
-                  child: Column(
+    Future<bool> showExitDialog() async {
+      return await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              backgroundColor: Colors.white,
+              surfaceTintColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              title: const Text(
+                'Takası Yarıda Bırakma! 🛑',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 20,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              content: const Text(
+                'Hızlıca ilanını oluşturup takas teklifleri almaya başlayabilirsin. Çıkmak istediğine emin misin?',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.black54,
+                  fontSize: 15,
+                  height: 1.5,
+                ),
+              ),
+              actionsAlignment: MainAxisAlignment.center,
+              actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              actions: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: BorderSide(color: Colors.grey.shade200),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: const Text(
+                          'Devam Et',
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.redAccent.withOpacity(0.1),
+                          foregroundColor: Colors.redAccent,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: const Text(
+                          'İptal Et',
+                          style: TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ) ??
+          false;
+    }
+
+    Future<void> handleBack() async {
+      if (currentStep.value > 0) {
+        previousStep();
+      } else {
+        final shouldExit = await showExitDialog();
+        if (shouldExit && context.mounted) {
+          Navigator.pop(context);
+        }
+      }
+    }
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        handleBack();
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF9FBFF),
+        appBar: AppBar(
+          title: Text(_getStepTitle(currentStep.value)),
+          leading: IconButton(
+            onPressed: handleBack,
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          ),
+        ),
+        body: Stack(
+          children: [
+            // Main Content (Always built to keep PageController attached)
+            GestureDetector(
+              onTap: () => FocusScope.of(context).unfocus(),
+              behavior: HitTestBehavior.opaque,
+              child: Stack(
+                children: [
+                  Column(
                     children: [
-                      _ModernAppBar(currentStep: currentStep.value),
                       _ProgressIndicator(currentStep: currentStep.value),
                       Expanded(
                         child: PageView(
@@ -109,7 +209,7 @@ class _AddProductViewBody extends HookWidget {
                       ),
                       _BottomActionBar(
                         currentStep: currentStep.value,
-                        onBack: previousStep,
+                        onBack: handleBack,
                         onForward: () async {
                           FocusScope.of(context).unfocus();
                           if (currentStep.value < 3) {
@@ -126,32 +226,32 @@ class _AddProductViewBody extends HookWidget {
                       ),
                     ],
                   ),
-                ),
-              ],
-            ),
-          ),
-          // Loading Overlay
-          if (viewModel.isLoading)
-            Container(
-              color: Colors.white.withOpacity(0.8),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const CircularProgressIndicator(color: AppTheme.primary),
-                    const SizedBox(height: 24),
-                    Text(
-                      'Veriler Hazırlanıyor...',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
+                ],
               ),
             ),
-        ],
+            // Loading Overlay
+            if (viewModel.isLoading)
+              Container(
+                color: Colors.white.withOpacity(0.8),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const CircularProgressIndicator(color: AppTheme.primary),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Veriler Hazırlanıyor...',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -343,50 +443,18 @@ class _AddProductViewBody extends HookWidget {
   }
 }
 
-class _ModernAppBar extends StatelessWidget {
-  final int currentStep;
-  const _ModernAppBar({required this.currentStep});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-            color: Colors.black87,
-          ),
-          Text(
-            _getStepTitle(currentStep),
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: Colors.black87,
-              letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(width: 40), // Placeholder to center
-        ],
-      ),
-    );
-  }
-
-  String _getStepTitle(int step) {
-    switch (step) {
-      case 0:
-        return 'Genel Bilgiler';
-      case 1:
-        return 'Ürün Detayları';
-      case 2:
-        return 'Görsel & Açıklama';
-      case 3:
-        return 'Onay ve Yayın';
-      default:
-        return 'İlan Oluştur';
-    }
+String _getStepTitle(int step) {
+  switch (step) {
+    case 0:
+      return 'Genel Bilgiler';
+    case 1:
+      return 'Ürün Detayları';
+    case 2:
+      return 'Görsel & Açıklama';
+    case 3:
+      return 'Onay ve Yayın';
+    default:
+      return 'İlan Oluştur';
   }
 }
 
