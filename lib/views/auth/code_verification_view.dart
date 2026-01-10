@@ -53,23 +53,45 @@ class _CodeVerificationViewState extends State<CodeVerificationView> {
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+        title: const Text('Doğrulama'),
+        backgroundColor: AppTheme.primary,
+        centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textPrimary),
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
           onPressed: () => Navigator.pop(context),
+        ),
+        titleTextStyle: AppTheme.safePoppins(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
         ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const SizedBox(height: 20),
+              // Icon
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: AppTheme.primary.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.verified_user_rounded,
+                  size: 64,
+                  color: AppTheme.primary,
+                ),
+              ),
+              const SizedBox(height: 32),
               Text(
                 'Doğrulama Kodu',
+                textAlign: TextAlign.center,
                 style: AppTheme.safePoppins(
-                  fontSize: 32,
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.textPrimary,
                 ),
@@ -77,13 +99,14 @@ class _CodeVerificationViewState extends State<CodeVerificationView> {
               const SizedBox(height: 12),
               Text(
                 'Lütfen e-posta adresinize gönderilen doğrulama kodunu giriniz.',
+                textAlign: TextAlign.center,
                 style: AppTheme.safePoppins(
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: FontWeight.w400,
                   color: AppTheme.textSecondary,
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 48),
 
               // Code Input
               TextField(
@@ -102,6 +125,7 @@ class _CodeVerificationViewState extends State<CodeVerificationView> {
                   counterText: "",
                   filled: true,
                   fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 16),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
@@ -124,48 +148,53 @@ class _CodeVerificationViewState extends State<CodeVerificationView> {
 
               if (authViewModel.state == AuthState.error &&
                   authViewModel.errorMessage != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0),
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.red.shade200),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.error_outline, color: Colors.red),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            authViewModel.errorMessage!,
-                            style: const TextStyle(color: Colors.red),
+                Container(
+                  margin: const EdgeInsets.only(bottom: 24),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppTheme.error.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppTheme.error.withOpacity(0.2)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.error_outline_rounded,
+                        color: AppTheme.error,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          authViewModel.errorMessage!,
+                          style: AppTheme.safePoppins(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: AppTheme.error,
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
 
               SizedBox(
-                width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
                   onPressed: authViewModel.state == AuthState.busy
                       ? null
                       : () {
                           final code = _codeController.text.trim();
-
                           authViewModel.verifyCode(code);
                         },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primary,
+                    foregroundColor: Colors.white,
+                    elevation: 4,
+                    shadowColor: AppTheme.primary.withOpacity(0.4),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    elevation: 4,
-                    shadowColor: AppTheme.primary.withOpacity(0.4),
                   ),
                   child: authViewModel.state == AuthState.busy
                       ? const SizedBox(
@@ -187,7 +216,7 @@ class _CodeVerificationViewState extends State<CodeVerificationView> {
                 ),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
 
               Center(
                 child: TextButton(
@@ -209,7 +238,7 @@ class _CodeVerificationViewState extends State<CodeVerificationView> {
                     'Tekrar Kod Gönder',
                     style: AppTheme.safePoppins(
                       fontSize: 14,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                       color: AppTheme.primary,
                     ),
                   ),

@@ -44,7 +44,7 @@ class AccountService {
   }
 
   Future<void> deleteUser(DeleteUserRequestModel request) async {
-    await _apiService.post(ApiConstants.deleteUser, request.toJson());
+    await _apiService.delete(ApiConstants.deleteUser, request.toJson());
   }
 
   Future<void> blockUser(BlockedUserRequest request) async {

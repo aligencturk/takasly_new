@@ -263,6 +263,7 @@ class _RegisterViewState extends State<RegisterView> {
                                   ),
                                 ),
                               );
+                              authViewModel.resetState();
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
