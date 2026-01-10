@@ -182,6 +182,8 @@ class _SearchViewState extends State<SearchView> {
                                             },
                                             textCapitalization:
                                                 TextCapitalization.sentences,
+                                            textAlignVertical:
+                                                TextAlignVertical.center,
                                             style: AppTheme.safePoppins(
                                               fontSize: 15,
                                               fontWeight: FontWeight.w500,

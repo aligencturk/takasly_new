@@ -434,7 +434,7 @@ class _UserProfileViewState extends State<UserProfileView>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  "Üyelik Tarihi: ${profile.memberSince ?? '-'}",
+                  "${profile.memberSince ?? '-'}",
                   style: AppTheme.safePoppins(
                     fontSize: 13,
                     fontWeight: FontWeight.w400,
