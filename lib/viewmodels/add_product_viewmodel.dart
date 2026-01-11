@@ -291,6 +291,8 @@ class AddProductViewModel extends ChangeNotifier {
       final XFile? photo = await _picker.pickImage(
         source: ImageSource.camera,
         imageQuality: 70,
+        maxWidth: 1920,
+        maxHeight: 1920,
       );
       if (photo != null) {
         selectedImages.add(File(photo.path));

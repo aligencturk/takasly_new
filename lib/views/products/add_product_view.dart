@@ -248,7 +248,7 @@ class _AddProductViewBody extends HookWidget {
                       const CircularProgressIndicator(color: AppTheme.primary),
                       const SizedBox(height: 24),
                       Text(
-                        'Veriler Hazırlanıyor...',
+                        'İlanınız yayınlanıyor, lütfen bekleyiniz...',
                         style: TextStyle(
                           color: Colors.grey[600],
                           fontWeight: FontWeight.w500,

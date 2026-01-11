@@ -10,6 +10,9 @@ import '../services/general_service.dart';
 import '../models/products/add_product_request_model.dart';
 import '../models/general_models.dart';
 import '../models/products/product_models.dart';
+import 'package:image/image.dart' as img;
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import '../services/analytics_service.dart';
 
 class EditProductViewModel extends ChangeNotifier {
@@ -270,6 +273,67 @@ class EditProductViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> rotateImage(int index, bool isNewImage) async {
+    isLoading = true;
+    notifyListeners();
+    try {
+      File? imageFile;
+
+      if (isNewImage) {
+        // Rotate existing file in newImages
+        if (index < 0 || index >= newImages.length) return;
+        imageFile = newImages[index];
+      } else {
+        // Rotate existing URL image
+        if (index < 0 || index >= existingImages.length) return;
+        final url = existingImages[index];
+
+        // Download image
+        final response = await http.get(Uri.parse(url));
+        if (response.statusCode != 200) throw Exception("Görsel indirilemedi");
+
+        final tempDir = await getTemporaryDirectory();
+        final tempFile = File(
+          '${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}.jpg',
+        );
+        await tempFile.writeAsBytes(response.bodyBytes);
+        imageFile = tempFile;
+      }
+
+      if (imageFile == null) return;
+
+      // Decode - Rotate - Encode
+      final bytes = await imageFile.readAsBytes();
+      final decodedImage = img.decodeImage(bytes);
+
+      if (decodedImage != null) {
+        final rotatedImage = img.copyRotate(decodedImage, angle: 90);
+        final encodedBytes = img.encodeJpg(rotatedImage, quality: 85);
+
+        final tempDir = await getTemporaryDirectory();
+        final rotatedFile = File(
+          '${tempDir.path}/rotated_${DateTime.now().millisecondsSinceEpoch}.jpg',
+        );
+        await rotatedFile.writeAsBytes(encodedBytes);
+
+        if (isNewImage) {
+          newImages[index] = rotatedFile;
+        } else {
+          // If it was a URL, remove from existing and add to newImages
+          existingImages.removeAt(index);
+          newImages.add(rotatedFile);
+        }
+        notifyListeners();
+      }
+    } catch (e) {
+      _logger.e("Error rotating image: $e");
+      errorMessage = "Fotoğraf döndürülürken hata oluştu.";
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
   // Fetchers
   Future<void> _fetchCategories() async {
     try {
@@ -459,6 +523,36 @@ class EditProductViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> _prepareImagesForSubmission() async {
+    List<File> finalImages = [];
+
+    // 1. Convert Existing Images (URLs) to Files
+    for (var url in existingImages) {
+      try {
+        final response = await http.get(Uri.parse(url));
+        if (response.statusCode == 200) {
+          final tempDir = await getTemporaryDirectory();
+          final tempFile = File(
+            '${tempDir.path}/existing_${DateTime.now().millisecondsSinceEpoch}_${finalImages.length}.jpg',
+          );
+          await tempFile.writeAsBytes(response.bodyBytes);
+          finalImages.add(tempFile);
+        } else {
+          _logger.w("Failed to download existing image: $url");
+        }
+      } catch (e) {
+        _logger.e("Error converting existing image to file: $e");
+      }
+    }
+
+    // 2. Add New Images (Already Files)
+    finalImages.addAll(newImages);
+
+    // 3. Update main list
+    newImages = finalImages;
+    existingImages = []; // Clear URLs as they are now files
+  }
+
   Future<bool> submitProduct(String userToken, int userId) async {
     if (!_validate()) return false;
 
@@ -467,6 +561,16 @@ class EditProductViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Convert all images to files so backend receives a consistent 'productImages[]' array
+      await _prepareImagesForSubmission();
+
+      if (newImages.isEmpty) {
+        errorMessage = "En az 1 görsel yüklemelisiniz.";
+        isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
       final request = AddProductRequestModel(
         userToken: userToken,
         productTitle: titleController.text.trim(),
@@ -475,8 +579,7 @@ class EditProductViewModel extends ChangeNotifier {
         conditionID: selectedCondition!.id!,
         tradeFor: tradeForController.text.trim(),
         productImages: newImages,
-        existingImageUrlList:
-            existingImages, // Send existing URLs back to KEEP them
+        existingImageUrlList: [], // All converted to files, so empty
         productCity: selectedCity!.cityNo!.toString(),
         productDistrict: selectedDistrict!.districtNo!.toString(),
         productLat: productLat ?? 0.0,

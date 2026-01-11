@@ -1616,6 +1616,7 @@ class _ImageGrid extends StatelessWidget {
                     imageUrl: viewModel.existingImages[index],
                     isCover: index == 0,
                     onDelete: () => viewModel.removeExistingImage(index),
+                    onRotate: () => viewModel.rotateImage(index, false),
                   );
                 } else {
                   // New
@@ -1624,6 +1625,7 @@ class _ImageGrid extends StatelessWidget {
                     file: viewModel.newImages[newIndex],
                     isCover: index == 0,
                     onDelete: () => viewModel.removeNewImage(newIndex),
+                    onRotate: () => viewModel.rotateImage(newIndex, true),
                   );
                 }
               },
@@ -1855,12 +1857,14 @@ class _ImageThumbnail extends StatelessWidget {
   final String? imageUrl;
   final bool isCover;
   final VoidCallback onDelete;
+  final VoidCallback? onRotate; // Callback added
 
   const _ImageThumbnail({
     this.file,
     this.imageUrl,
     required this.isCover,
     required this.onDelete,
+    this.onRotate,
   });
 
   @override
@@ -1913,7 +1917,7 @@ class _ImageThumbnail extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(4),
                 decoration: const BoxDecoration(
-                  color: Colors.black54,
+                  color: Colors.redAccent, // Changed to red for visibility
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -1924,6 +1928,26 @@ class _ImageThumbnail extends StatelessWidget {
               ),
             ),
           ),
+          if (onRotate != null)
+            Positioned(
+              right: 4,
+              bottom: 4,
+              child: GestureDetector(
+                onTap: onRotate,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.6),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.rotate_right_rounded,
+                    color: Colors.white,
+                    size: 16,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
