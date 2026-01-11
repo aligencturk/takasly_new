@@ -49,7 +49,7 @@ class _ProfileViewState extends State<ProfileView> {
     if (!isLoggedIn) {
       return Scaffold(
         backgroundColor: AppTheme.background,
-        appBar: _buildAppBar(context),
+        appBar: _buildAppBar(context, isGuest: true),
         body: SafeArea(child: _buildGuestProfile(context)),
       );
     }
@@ -270,20 +270,27 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
+  PreferredSizeWidget _buildAppBar(
+    BuildContext context, {
+    bool isGuest = false,
+  }) {
     return AppBar(
       title: const Text('Hesabım'),
-      actions: [
-        IconButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const SettingsView()),
-            );
-          },
-          icon: const Icon(Icons.settings_outlined),
-        ),
-      ],
+      actions: isGuest
+          ? []
+          : [
+              IconButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SettingsView(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.settings_outlined),
+              ),
+            ],
     );
   }
 

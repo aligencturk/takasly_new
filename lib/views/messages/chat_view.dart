@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:io'; // Import for Platform
 import 'package:flutter/material.dart';
+import 'package:firebase_messaging/firebase_messaging.dart'; // Import for FirebaseMessaging
+import '../../services/firebase_messaging_service.dart'; // Import for FirebaseMessagingService
 import 'package:provider/provider.dart';
 import 'package:takasly/viewmodels/ticket_viewmodel.dart';
 import 'package:takasly/viewmodels/auth_viewmodel.dart';
@@ -39,6 +42,21 @@ class _ChatViewState extends State<ChatView> {
       _fetchMessages(isRefresh: true);
       _fetchTicketDetail();
     });
+
+    // Set active ticket ID to suppress notifications
+    if (widget.ticket.ticketID != null) {
+      FirebaseMessagingService.activeTicketId = widget.ticket.ticketID;
+
+      // iOS: Temporarily disable foreground notification alerts
+      if (Platform.isIOS) {
+        FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+          alert: false,
+          badge: true,
+          sound: true,
+        );
+      }
+    }
+
     _startPolling();
   }
 
@@ -102,6 +120,19 @@ class _ChatViewState extends State<ChatView> {
   @override
   void dispose() {
     _stopPolling();
+
+    // Reset active ticket ID
+    FirebaseMessagingService.activeTicketId = null;
+
+    // iOS: Re-enable foreground notification alerts
+    if (Platform.isIOS) {
+      FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+    }
+
     _scrollController.dispose();
     _messageController.dispose();
     super.dispose();

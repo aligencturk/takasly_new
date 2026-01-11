@@ -68,6 +68,14 @@ class ProductViewModel extends ChangeNotifier {
     }
   }
 
+  void updateLocation(double lat, double long) {
+    _currentFilter.userLat = lat.toString();
+    _currentFilter.userLong = long.toString();
+    _currentFilter.sortType = 'location';
+    _logger.i('Location updated externally: $lat, $long');
+    fetchProducts(isRefresh: true);
+  }
+
   Future<void> fetchProducts({bool isRefresh = false}) async {
     // Race condition fix: Allow refresh even if isLoading is true,
     // because we might be switching from "default sort" to "location sort"

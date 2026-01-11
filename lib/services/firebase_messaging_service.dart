@@ -28,6 +28,43 @@ class FirebaseMessagingService {
     enableVibration: true,
   );
 
+  static int? activeTicketId;
+
+  /// Check if the notification should be suppressed (e.g. user is in the chat)
+  static bool _shouldSuppressNotification(Map<String, dynamic> data) {
+    if (activeTicketId == null) return false;
+
+    // Same parsing logic as _processNavigation
+    Map<String, dynamic> finalData = Map.from(data);
+    if (finalData.containsKey('keysandvalues')) {
+      try {
+        String jsonStr = finalData['keysandvalues'].toString();
+        if (jsonStr.contains(': }') ||
+            jsonStr.contains(':, }') ||
+            jsonStr.contains(': }')) {
+          jsonStr = jsonStr.replaceAll(RegExp(r':\s*}'), ': null}');
+        }
+        final nested = jsonDecode(jsonStr);
+        if (nested is Map) {
+          finalData.addAll(Map<String, dynamic>.from(nested));
+        }
+      } catch (_) {}
+    }
+
+    final type = finalData['type'] as String? ?? '';
+    final idValue = finalData['id'] ?? finalData['type_id'] ?? '0';
+    final typeId = int.tryParse(idValue.toString()) ?? 0;
+
+    if (type == 'new_ticket_message' && typeId == activeTicketId) {
+      developer.log(
+        '🔕 Suppressing notification for active ticket: $activeTicketId',
+        name: 'FCM',
+      );
+      return true;
+    }
+    return false;
+  }
+
   /// Initialize Firebase Messaging and Local Notifications
   static Future<void> initialize() async {
     try {
@@ -94,6 +131,11 @@ class FirebaseMessagingService {
       // 4. Handle Foreground Messages
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         developer.log('📨 Foreground message received', name: 'FCM');
+
+        // Check suppression
+        if (_shouldSuppressNotification(message.data)) {
+          return;
+        }
 
         RemoteNotification? notification = message.notification;
         AndroidNotification? android = message.notification?.android;

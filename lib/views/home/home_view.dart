@@ -30,6 +30,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../widgets/ads/banner_ad_widget.dart';
 
 import 'package:takasly/services/analytics_service.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HomeView extends StatefulWidget {
@@ -100,10 +101,19 @@ class _HomeViewState extends State<HomeView> {
     }
 
     // Fetch Products
-    // If we haven't loaded yet, or if it failed/empty, load now.
-    if (productVM.products.isEmpty) {
-      productVM.init();
-    }
+    // Attempt to get location and sort by it by default
+    Geolocator.getCurrentPosition()
+        .then((position) {
+          if (mounted) {
+            productVM.updateLocation(position.latitude, position.longitude);
+          }
+        })
+        .catchError((e) {
+          // If location fails, fallback to standard init (default sort)
+          if (productVM.products.isEmpty) {
+            productVM.init();
+          }
+        });
 
     _checkProfileCompletion();
   }

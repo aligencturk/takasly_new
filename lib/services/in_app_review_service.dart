@@ -90,10 +90,20 @@ class InAppReviewService {
     }
   }
 
+  // App Store Connect'ten uygulamanızın Apple ID'si
+  static const String _appStoreId = '6749484217';
+
   /// Force open store for rating (fallback or manual button)
   Future<void> openStoreListing() async {
-    await _inAppReview.openStoreListing(
-      appStoreId: '6523423714', // Replace with actual App Store ID
-    );
+    if (_appStoreId.isEmpty) {
+      _logger.w('App Store ID ayarlanmamış!');
+      return;
+    }
+
+    try {
+      await _inAppReview.openStoreListing(appStoreId: _appStoreId);
+    } catch (e) {
+      _logger.e('Mağaza açılırken hata oluştu: $e');
+    }
   }
 }
