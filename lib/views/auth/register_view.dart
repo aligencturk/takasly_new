@@ -80,12 +80,13 @@ class _RegisterViewState extends State<RegisterView> {
                     tag: 'app_logo',
                     child: Image.asset(
                       'assets/logo/logo2.png',
-                      height: 160,
+                      height: 100,
+                      width: 200,
                       fit: BoxFit.contain,
                     ),
                   ),
                 ),
-
+                const SizedBox(height: 20),
                 // Titles - Center Aligned
                 Text(
                   'Hemen Katıl',

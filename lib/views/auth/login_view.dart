@@ -54,19 +54,19 @@ class _LoginViewState extends State<LoginView> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const SizedBox(height: 20),
                           // Logo - Top Center
                           Center(
                             child: Hero(
                               tag: 'app_logo',
                               child: Image.asset(
                                 'assets/logo/logo2.png',
-                                height: 250,
+                                height: 100,
+                                width: 200,
                                 fit: BoxFit.contain,
                               ),
                             ),
                           ),
-
+                          const SizedBox(height: 20),
                           // Titles - Center Aligned
                           Text(
                             'Giriş Yap',
