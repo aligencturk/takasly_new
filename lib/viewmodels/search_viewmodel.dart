@@ -9,6 +9,7 @@ import '../services/general_service.dart';
 import '../models/search/popular_category_model.dart';
 import '../models/general_models.dart';
 import '../services/analytics_service.dart';
+import '../services/in_app_review_service.dart';
 
 class SearchViewModel extends ChangeNotifier {
   final ProductService _productService = ProductService();
@@ -218,6 +219,7 @@ class SearchViewModel extends ChangeNotifier {
             itemId: productId.toString(),
             itemCategory: 'Search', // Context
           );
+          InAppReviewService().incrementActionAndCheck();
         } else {
           await _productService.removeFavoriteProduct(token, productId);
           AnalyticsService().logEvent(

@@ -19,6 +19,7 @@ import '../settings/about_view.dart';
 import '../widgets/ads/banner_ad_widget.dart';
 
 import 'package:takasly/services/analytics_service.dart';
+import '../../services/in_app_review_service.dart';
 
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
@@ -148,6 +149,33 @@ class _ProfileViewState extends State<ProfileView> {
             const SizedBox(height: 12),
             _buildMenuSection(
               children: [
+                _buildMenuItem(
+                  context,
+                  icon: Icons.star_rounded,
+                  title: "Bizi Değerlendir",
+                  onTap: () => InAppReviewService().openStoreListing(),
+                  iconColor: Colors.amber,
+                  backgroundColor: const Color(0xFFFFF9C4).withOpacity(0.5),
+                  trailing: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.amber,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      'DESTEK OL',
+                      style: AppTheme.safePoppins(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
+                _buildDivider(),
                 _buildMenuItem(
                   context,
                   icon: Icons.settings_outlined,
@@ -526,9 +554,11 @@ class _ProfileViewState extends State<ProfileView> {
     required VoidCallback onTap,
     Color? textColor,
     Color? iconColor,
+    Color? backgroundColor,
+    Widget? trailing,
   }) {
     return Material(
-      color: Colors.transparent,
+      color: backgroundColor ?? Colors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(1),
@@ -548,6 +578,7 @@ class _ProfileViewState extends State<ProfileView> {
                   ),
                 ),
               ),
+              if (trailing != null) ...[trailing, const SizedBox(width: 8)],
               const Icon(
                 Icons.chevron_right_rounded,
                 color: Color(0xFFE0E0E0),

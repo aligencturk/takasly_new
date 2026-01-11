@@ -5,6 +5,7 @@ import '../services/api_service.dart';
 import '../services/location_service.dart';
 
 import 'package:takasly/services/analytics_service.dart';
+import 'package:takasly/services/in_app_review_service.dart';
 import 'package:logger/logger.dart';
 
 class ProductViewModel extends ChangeNotifier {
@@ -289,6 +290,7 @@ class ProductViewModel extends ChangeNotifier {
     try {
       if (product.isFavorite == true) {
         await _productService.addFavorite(token, product.productID!);
+        InAppReviewService().incrementActionAndCheck();
       } else {
         await _productService.removeFavoriteProduct(token, product.productID!);
       }
