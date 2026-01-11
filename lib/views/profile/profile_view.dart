@@ -183,14 +183,6 @@ class _ProfileViewState extends State<ProfileView> {
                     );
                   },
                 ),
-                _buildMenuItem(
-                  context,
-                  icon: Icons.help_outline_rounded,
-                  title: "Yardım Merkezi",
-                  onTap: () {
-                    // Navigate to Help
-                  },
-                ),
                 _buildDivider(),
                 _buildMenuItem(
                   context,
