@@ -78,6 +78,16 @@ class TicketViewModel extends ChangeNotifier {
           tickets.addAll(newTickets);
         }
 
+        // --- Sorting/Pinning Logic ---
+        // Ensure pinned tickets (like Takasly Destek) stay at the top.
+        // If the API already sorts them, this is redundant but safe.
+        tickets.sort((a, b) {
+          if (a.pinned == true && b.pinned != true) return -1;
+          if (a.pinned != true && b.pinned == true) return 1;
+          return 0; // Maintain relative order for others
+        });
+        // ----------------------------
+
         // Pagination Logic
         if (newTickets.isEmpty) {
           isLastPage = true;

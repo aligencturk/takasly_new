@@ -100,6 +100,9 @@ class Ticket {
   int? unreadCount;
   bool? isUnread;
   bool? isAdmin;
+  String? ticketType;
+  bool? pinned;
+  bool? allowUserMessages;
 
   Ticket({
     this.ticketID,
@@ -118,6 +121,9 @@ class Ticket {
     this.unreadCount,
     this.isUnread,
     this.isAdmin,
+    this.ticketType,
+    this.pinned,
+    this.allowUserMessages,
   });
 
   Ticket.fromJson(Map<String, dynamic> json) {
@@ -137,6 +143,10 @@ class Ticket {
     unreadCount = json['unreadCount'];
     isUnread = json['isUnread'];
     isAdmin = json['isAdmin'] == true || json['isAdmin'] == 1;
+    ticketType = json['ticketType'];
+    pinned = json['pinned'] == true || json['pinned'] == 1;
+    allowUserMessages =
+        json['allowUserMessages'] == true || json['allowUserMessages'] == 1;
   }
 
   Map<String, dynamic> toJson() {
@@ -157,6 +167,9 @@ class Ticket {
     data['unreadCount'] = unreadCount;
     data['isUnread'] = isUnread;
     data['isAdmin'] = isAdmin;
+    data['ticketType'] = ticketType;
+    data['pinned'] = pinned;
+    data['allowUserMessages'] = allowUserMessages;
     return data;
   }
 }
@@ -298,6 +311,9 @@ class TicketDetailData {
   int? unreadCount;
   bool? isUnread;
   bool? isAdmin;
+  String? ticketType;
+  bool? pinned;
+  bool? allowUserMessages;
   String? createdAt;
 
   TicketDetailData({
@@ -313,6 +329,9 @@ class TicketDetailData {
     this.unreadCount,
     this.isUnread,
     this.isAdmin,
+    this.ticketType,
+    this.pinned,
+    this.allowUserMessages,
     this.createdAt,
   });
 
@@ -333,6 +352,10 @@ class TicketDetailData {
     unreadCount = json['unreadCount'];
     isUnread = json['isUnread'];
     isAdmin = json['isAdmin'] == true || json['isAdmin'] == 1;
+    ticketType = json['ticketType'];
+    pinned = json['pinned'] == true || json['pinned'] == 1;
+    allowUserMessages =
+        json['allowUserMessages'] == true || json['allowUserMessages'] == 1;
     createdAt = json['createdAt'];
   }
 }

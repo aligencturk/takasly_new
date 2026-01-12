@@ -296,17 +296,21 @@ class _ChatViewState extends State<ChatView> {
       appBar: AppBar(
         title: Consumer2<TicketViewModel, AuthViewModel>(
           builder: (context, viewModel, authVM, child) {
-            final name =
-                viewModel.currentTicketDetail?.otherFullname ??
-                widget.ticket.otherFullname ??
-                "Sohbet";
-            final otherIsAdmin =
+            final detailName = viewModel.currentTicketDetail?.otherFullname;
+            final name = (detailName != null && detailName.trim().isNotEmpty)
+                ? detailName
+                : (widget.ticket.otherFullname?.isNotEmpty == true
+                      ? widget.ticket.otherFullname!
+                      : "Sohbet");
+
+            final isSystem =
                 viewModel.currentTicketDetail?.isAdmin == true ||
                 widget.ticket.isAdmin == true ||
+                widget.ticket.ticketType == "system" ||
                 name.toLowerCase().contains("takasly destek");
 
             return InkWell(
-              onTap: otherIsAdmin
+              onTap: isSystem
                   ? null
                   : () => _navigateToProfile(
                       viewModel.currentTicketDetail?.otherUserID ??
@@ -326,7 +330,7 @@ class _ChatViewState extends State<ChatView> {
                           color: AppTheme.surface,
                         ),
                       ),
-                      if (otherIsAdmin) ...[
+                      if (isSystem) ...[
                         const SizedBox(width: 4),
                         const Icon(
                           Icons.verified_rounded,
@@ -336,7 +340,7 @@ class _ChatViewState extends State<ChatView> {
                       ],
                     ],
                   ),
-                  if (otherIsAdmin)
+                  if (isSystem)
                     Text(
                       "RESMİ YETKİLİ",
                       style: AppTheme.safePoppins(
@@ -356,6 +360,7 @@ class _ChatViewState extends State<ChatView> {
             context.watch<TicketViewModel>().currentTicketDetail?.isAdmin ==
                     true ||
                 widget.ticket.isAdmin == true ||
+                widget.ticket.ticketType == "system" ||
                 (widget.ticket.otherFullname?.toLowerCase().contains(
                       "takasly destek",
                     ) ??
@@ -373,12 +378,13 @@ class _ChatViewState extends State<ChatView> {
                   viewModel.currentTicketDetail?.otherFullname ??
                   widget.ticket.otherFullname ??
                   "";
-              final isAdmin =
+              final isSystem =
                   viewModel.currentTicketDetail?.isAdmin == true ||
                   widget.ticket.isAdmin == true ||
+                  widget.ticket.ticketType == "system" ||
                   name.toLowerCase().contains("takasly destek");
 
-              if (isAdmin) return const SizedBox.shrink();
+              if (isSystem) return const SizedBox.shrink();
 
               return PopupMenuButton<String>(
                 icon: const Icon(Icons.more_vert, color: AppTheme.surface),
@@ -447,9 +453,10 @@ class _ChatViewState extends State<ChatView> {
           Consumer<TicketViewModel>(
             builder: (context, viewModel, child) {
               final detail = viewModel.currentTicketDetail;
-              final isAdmin =
+              final isSystem =
                   detail?.isAdmin == true ||
                   widget.ticket.isAdmin == true ||
+                  widget.ticket.ticketType == "system" ||
                   (detail?.otherFullname?.toLowerCase().contains(
                         "takasly destek",
                       ) ??
@@ -464,7 +471,9 @@ class _ChatViewState extends State<ChatView> {
               final targetTitle =
                   detail?.targetProduct?.productTitle ??
                   widget.ticket.productTitle ??
-                  (targetId != null ? "İlan..." : "Bilinmeyen İlan");
+                  (targetId != null && targetId > 0
+                      ? "İlan..."
+                      : "Bilinmeyen İlan");
               final targetImage =
                   detail?.targetProduct?.productImage ??
                   widget.ticket.productImage;
@@ -474,7 +483,8 @@ class _ChatViewState extends State<ChatView> {
               final offeredImage = detail?.offeredProduct?.productImage;
               final offeredId = detail?.offeredProduct?.productID;
 
-              if (targetId == null) {
+              // Hide banner if no valid product or it's a system ticket with 0-product
+              if (targetId == null || targetId <= 0) {
                 return const SizedBox.shrink();
               }
 
@@ -631,7 +641,7 @@ class _ChatViewState extends State<ChatView> {
                             ),
                           ),
                         )
-                      else if (!isAdmin)
+                      else if (!isSystem)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: ElevatedButton.icon(
@@ -662,7 +672,7 @@ class _ChatViewState extends State<ChatView> {
 
               // --- CASE B: SINGLE PRODUCT CONTEXT ---
               return InkWell(
-                onTap: isAdmin ? null : () => _navigateToProduct(targetId),
+                onTap: isSystem ? null : () => _navigateToProduct(targetId),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -711,7 +721,7 @@ class _ChatViewState extends State<ChatView> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      if (!isAdmin)
+                      if (!isSystem)
                         ElevatedButton(
                           onPressed: () => _startTradeFlow(targetId),
                           style: ElevatedButton.styleFrom(
@@ -743,57 +753,111 @@ class _ChatViewState extends State<ChatView> {
           ),
           Consumer<TicketViewModel>(
             builder: (context, viewModel, child) {
-              final name =
-                  viewModel.currentTicketDetail?.otherFullname ??
-                  widget.ticket.otherFullname ??
-                  "";
-              final isAdmin =
+              final detailName = viewModel.currentTicketDetail?.otherFullname;
+              final name = (detailName != null && detailName.trim().isNotEmpty)
+                  ? detailName
+                  : (widget.ticket.otherFullname?.isNotEmpty == true
+                        ? widget.ticket.otherFullname!
+                        : "");
+
+              final isSystem =
                   viewModel.currentTicketDetail?.isAdmin == true ||
                   widget.ticket.isAdmin == true ||
+                  widget.ticket.ticketType == "system" ||
                   name.toLowerCase().contains("takasly destek");
 
-              if (isAdmin) {
+              if (isSystem) {
                 return Container(
                   width: double.infinity,
                   margin: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 8,
                   ),
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                   decoration: BoxDecoration(
-                    color: Colors.amber.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.amber.shade200),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFFFFD700).withOpacity(0.5),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFFD700).withOpacity(0.08),
+                        blurRadius: 15,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        Icons.verified_user_rounded,
-                        color: Colors.amber.shade800,
-                        size: 24,
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF8E1),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFFFD700).withOpacity(0.2),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.verified_user_rounded,
+                          color: Color(0xFFB8860B),
+                          size: 26,
+                        ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              "RESMİ YETKİLİ BİLGİLENDİRMESİ",
-                              style: AppTheme.safePoppins(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.amber.shade900,
-                                letterSpacing: 0.5,
-                              ),
+                            Row(
+                              children: [
+                                Text(
+                                  "RESMİ YETKİLİ",
+                                  style: AppTheme.safePoppins(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w900,
+                                    color: const Color(0xFFB8860B),
+                                    letterSpacing: 1.5,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  width: 4,
+                                  height: 4,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFB8860B),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  "GÜVENLİ SOHBET",
+                                  style: AppTheme.safePoppins(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.green.shade600,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 6),
                             Text(
-                              "Bu hesap bir Takasly yöneticisine aittir. Kurumsal güvenliğiniz için tüm görüşmeleriniz Takasly güvencesi altındadır.",
+                              "Bu sohbet bir Takasly yöneticisi ile gerçekleştirilmektedir. Güvenliğiniz için tüm görüşmeleriniz kayıt altındadır.",
                               style: AppTheme.safePoppins(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.amber.shade900,
-                                height: 1.3,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: AppTheme.textPrimary.withOpacity(0.8),
+                                height: 1.5,
                               ),
                             ),
                           ],
@@ -1081,7 +1145,7 @@ class _ChatViewState extends State<ChatView> {
               },
             ),
           ),
-          _buildMessageInput(),
+          if (widget.ticket.allowUserMessages != false) _buildMessageInput(),
         ],
       ),
     );

@@ -300,8 +300,6 @@ class EditProductViewModel extends ChangeNotifier {
         imageFile = tempFile;
       }
 
-      if (imageFile == null) return;
-
       // Decode - Rotate - Encode
       final bytes = await imageFile.readAsBytes();
       final decodedImage = img.decodeImage(bytes);

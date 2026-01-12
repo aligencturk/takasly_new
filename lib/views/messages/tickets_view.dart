@@ -194,232 +194,247 @@ class _TicketCard extends StatelessWidget {
     final userPhoto = ticket.otherProfilePhoto ?? ticket.otherPhoto;
     final isUnread = ticket.isUnread == true;
     final name = ticket.otherFullname ?? "Kullanıcı";
-    final isAdmin =
-        ticket.isAdmin == true || name.toLowerCase().contains("takasly destek");
+    final isSystem =
+        ticket.ticketType == "system" ||
+        ticket.pinned == true ||
+        ticket.isAdmin == true ||
+        name.toLowerCase().contains("takasly destek");
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isAdmin ? Colors.amber.shade50 : Colors.white,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: isAdmin
-                  ? Colors.amber.withOpacity(0.1)
+              color: isSystem
+                  ? const Color(0xFFFFD700).withOpacity(0.08)
                   : Colors.black.withOpacity(0.03),
-              blurRadius: 10,
+              blurRadius: 15,
               offset: const Offset(0, 4),
             ),
           ],
           border: Border.all(
-            color: isAdmin
-                ? Colors.amber.shade600
+            color: isSystem
+                ? const Color(0xFFFFD700).withOpacity(0.5)
                 : (isUnread
                       ? AppTheme.primary.withOpacity(0.3)
                       : const Color(0xFFF1F5F9)),
-            width: isAdmin ? 2 : (isUnread ? 1.5 : 1),
+            width: isSystem ? 1.5 : (isUnread ? 1.5 : 1),
           ),
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Avatar & Product Image Stack
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                CircleAvatar(
-                  radius: 28,
-                  backgroundColor: isAdmin
-                      ? Colors.amber.shade100
-                      : AppTheme.primary.withOpacity(0.1),
-                  backgroundImage: userPhoto != null
-                      ? NetworkImage(userPhoto)
-                      : null,
-                  child: userPhoto == null
-                      ? Text(
-                          name.isNotEmpty ? name[0].toUpperCase() : "?",
-                          style: AppTheme.safePoppins(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: isAdmin
-                                ? Colors.amber.shade900
-                                : AppTheme.primary,
-                          ),
-                        )
-                      : null,
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              if (isSystem)
+                Container(
+                  width: 4,
+                  margin: const EdgeInsets.only(right: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFD700),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
-                if (isAdmin)
-                  Positioned(
-                    right: -4,
-                    top: -4,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: Colors.amber,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black26,
-                            blurRadius: 4,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.verified_rounded,
-                        size: 14,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                if (ticket.productImage != null)
-                  Positioned(
-                    right: -2,
-                    bottom: -2,
-                    child: Container(
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                        image: DecorationImage(
-                          image: NetworkImage(ticket.productImage!),
-                          fit: BoxFit.cover,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 4,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(width: 12),
-
-            // Content
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              // Avatar & Product Image Stack
+              Stack(
+                clipBehavior: Clip.none,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: AppTheme.safePoppins(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 15,
-                                  color: isAdmin
-                                      ? Colors.amber.shade900
-                                      : AppTheme.textPrimary,
-                                ),
-                              ),
+                  CircleAvatar(
+                    radius: 28,
+                    backgroundColor: isSystem
+                        ? const Color(0xFFFFF8E1)
+                        : AppTheme.primary.withOpacity(0.1),
+                    backgroundImage: userPhoto != null
+                        ? NetworkImage(userPhoto)
+                        : null,
+                    child: userPhoto == null
+                        ? Text(
+                            name.isNotEmpty ? name[0].toUpperCase() : "?",
+                            style: AppTheme.safePoppins(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: isSystem
+                                  ? Colors.amber.shade900
+                                  : AppTheme.primary,
                             ),
-                            if (isAdmin) ...[
-                              const SizedBox(width: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.amber,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  "YETKİLİ",
-                                  style: AppTheme.safePoppins(
-                                    fontSize: 8,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ],
+                          )
+                        : null,
+                  ),
+                  if (isSystem)
+                    Positioned(
+                      right: -2,
+                      top: -2,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFFD700),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.verified_rounded,
+                          size: 14,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  if (ticket.productImage != null)
+                    Positioned(
+                      right: -2,
+                      bottom: -2,
+                      child: Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                          image: DecorationImage(
+                            image: NetworkImage(ticket.productImage!),
+                            fit: BoxFit.cover,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 4,
+                            ),
                           ],
                         ),
                       ),
-                      if (ticket.lastMessageAt != null)
-                        Text(
-                          ticket.lastMessageAt!,
-                          style: AppTheme.safePoppins(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: AppTheme.textSecondary,
+                    ),
+                ],
+              ),
+              const SizedBox(width: 12),
+
+              // Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTheme.safePoppins(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 15,
+                                    color: isSystem
+                                        ? const Color(0xFFB8860B)
+                                        : AppTheme.textPrimary,
+                                  ),
+                                ),
+                              ),
+                              if (isSystem) ...[
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(
+                                      0xFFFFD700,
+                                    ).withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(
+                                      color: const Color(
+                                        0xFFFFD700,
+                                      ).withOpacity(0.5),
+                                      width: 0.5,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    "YETKİLİ",
+                                    style: AppTheme.safePoppins(
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.w800,
+                                      color: const Color(0xFFB8860B),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  if (ticket.productTitle != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 2),
-                      child: Text(
-                        "İlan: ${ticket.productTitle}",
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTheme.safePoppins(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.primary,
-                        ),
-                      ),
+                        if (ticket.lastMessageAt != null)
+                          Text(
+                            ticket.lastMessageAt!,
+                            style: AppTheme.safePoppins(
+                              fontSize: 10,
+                              fontWeight: FontWeight.normal,
+                              color: AppTheme.textSecondary,
+                            ),
+                          ),
+                      ],
                     ),
-                  Row(
-                    children: [
-                      Expanded(
+                    const SizedBox(height: 4),
+                    if (ticket.productTitle != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 2),
                         child: Text(
-                          ticket.lastMessage ?? "",
+                          "İlan: ${ticket.productTitle}",
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppTheme.safePoppins(
-                            fontSize: 13,
-                            color: isUnread
-                                ? AppTheme.textPrimary
-                                : AppTheme.textSecondary,
-                            fontWeight: isUnread
-                                ? FontWeight.w600
-                                : FontWeight.normal,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.primary,
                           ),
                         ),
                       ),
-                      if (isUnread && (ticket.unreadCount ?? 0) > 0)
-                        Container(
-                          margin: const EdgeInsets.only(left: 8),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: const BoxDecoration(
-                            color: AppTheme.primary,
-                            shape: BoxShape.circle,
-                          ),
+                    Row(
+                      children: [
+                        Expanded(
                           child: Text(
-                            ticket.unreadCount.toString(),
+                            ticket.lastMessage ?? "",
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: AppTheme.safePoppins(
-                              color: AppTheme.surface,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                              color: isUnread
+                                  ? AppTheme.textPrimary
+                                  : AppTheme.textSecondary,
+                              fontWeight: isUnread
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
                             ),
                           ),
                         ),
-                    ],
-                  ),
-                ],
+                        if (isUnread && (ticket.unreadCount ?? 0) > 0)
+                          Container(
+                            margin: const EdgeInsets.only(left: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: const BoxDecoration(
+                              color: AppTheme.primary,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Text(
+                              ticket.unreadCount.toString(),
+                              style: AppTheme.safePoppins(
+                                color: AppTheme.surface,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
