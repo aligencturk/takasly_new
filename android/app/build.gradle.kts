@@ -38,7 +38,7 @@ android {
         create("release") {
             keyAlias = keystoreProperties["keyAlias"] as String?
             keyPassword = keystoreProperties["keyPassword"] as String?
-            storeFile = keystoreProperties["storeFile"]?.let { file(it) }
+            storeFile = keystoreProperties["storeFile"]?.let { rootProject.file(it) }
             storePassword = keystoreProperties["storePassword"] as String?
         }
     }
@@ -47,13 +47,12 @@ android {
         applicationId = "com.rivorya.takaslyapp"
         minSdk = 23
         targetSdk = flutter.targetSdkVersion
-        versionCode = 2
-        versionName = "2.0.0"
+        versionCode = 3
+        versionName = "2.0.1"
     }
 
     buildTypes {
         getByName("release") {
-            // 3. BURAYI DÜZELTTİK: Artık debug değil, yukarıdaki gerçek anahtarı (release) kullanıyor
             signingConfig = signingConfigs.getByName("release")
             
             isMinifyEnabled = false
