@@ -29,9 +29,6 @@ class AnalyticsService {
       // but we can't easily add it here without dependency injection which might break singleton pattern or cause circular deps.
 
       await _analytics.logEvent(name: name, parameters: finalParams);
-      if (kDebugMode) {
-        _logger.d('Analytics Event Logged: $name, params: $finalParams');
-      }
     } catch (e) {
       if (kDebugMode) {
         _logger.e('Failed to log analytics event: $e');

@@ -223,7 +223,9 @@ class ProductCard extends StatelessWidget {
             // Content Area
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(10), // Tighter padding
+                padding: const EdgeInsets.all(
+                  8,
+                ), // Reduced padding for better fit
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -234,13 +236,15 @@ class ProductCard extends StatelessWidget {
                         // Category (Green/Primary)
                         Text(
                           product.categoryTitle ?? 'Kategori',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: AppTheme.safePoppins(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
                             color: AppTheme.primary,
                           ),
                         ),
-                        const SizedBox(height: 4), // Better spacing
+                        const SizedBox(height: 2), // Reduced spacing
                         // Title
                         Text(
                           product.productTitle ?? '',

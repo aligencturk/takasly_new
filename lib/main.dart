@@ -95,12 +95,28 @@ class _MyAppState extends State<MyApp> {
         supportedLocales: const [Locale('tr', 'TR'), Locale('en', 'US')],
         home: const RootView(),
         builder: (context, child) {
-          return GlobalInteractionObserver(
-            child: GestureDetector(
-              onTap: () {
-                FocusManager.instance.primaryFocus?.unfocus();
-              },
-              child: child,
+          return MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.noScaling, boldText: false),
+            child: DefaultTextStyle(
+              // Android'deki yazı kaymalarını ve "patlamaları" engellemek için
+              // tüm uygulamada geçerli tek bir yazı yüksekliği ve hizalama kuralı.
+              style: TextStyle(
+                height: 1.2, // Yazıların dikeyde kaymasını engeller
+                leadingDistribution: TextLeadingDistribution
+                    .even, // Satır boşluklarını eşit dağıtır
+                color: AppTheme.textPrimary,
+                fontFamily: 'Poppins',
+              ),
+              child: GlobalInteractionObserver(
+                child: GestureDetector(
+                  onTap: () {
+                    FocusManager.instance.primaryFocus?.unfocus();
+                  },
+                  child: child,
+                ),
+              ),
             ),
           );
         },

@@ -59,14 +59,6 @@
           }
         },
         {
-          "client_id": "422264804561-qcsjuujioo9ipe60kjs3at8hgeoa979d.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.rivorya.takaslyapp",
-            "certificate_hash": "5edb8e013c89a17bcd6ce2793bb576dcb6782be9"
-          }
-        },
-        {
           "client_id": "422264804561-jo429jh0c16gk38d3jdaikob0iet5mpd.apps.googleusercontent.com",
           "client_type": 3
         }

@@ -438,6 +438,8 @@ class AuthViewModel extends ChangeNotifier {
 
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn(
+        serverClientId:
+            '422264804561-jo429jh0c16gk38d3jdaikob0iet5mpd.apps.googleusercontent.com',
         clientId: Platform.isIOS
             ? '422264804561-llio284tijfqkh873at3ci09fna2epl0.apps.googleusercontent.com'
             : null,

@@ -118,10 +118,21 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
+      platform: TargetPlatform
+          .iOS, // Android'de de iOS davranışlarını (kaydırma, geçişler vb.) zorunlu kılar
+      visualDensity:
+          VisualDensity.standard, // Tüm cihazlarda standart yoğunluk sağlar
       brightness: Brightness.light,
       primaryColor: primary,
       scaffoldBackgroundColor: background,
       cardColor: surface,
+      // Sayfa geçişlerini tüm platformlarda iOS tarzı (sağdan sola) yapar
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+        },
+      ),
       // Kalın metin kontrolü için font weight ayarları
       // Google Fonts kullanılıyorsa Inter, değilse sistem fontu kullanılır
       // Text scaling ve bold text kontrolü
